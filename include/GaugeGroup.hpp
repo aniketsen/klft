@@ -502,7 +502,9 @@ namespace klft {
     }
 
     KOKKOS_INLINE_FUNCTION void restoreGauge() {
-      v /= Kokkos::sqrt(v.real()*v.real() + v.imag()*v.imag());
+      T norm = Kokkos::sqrt(v.real()*v.real() + v.imag()*v.imag());
+      if(Kokkos::abs(norm-0.0) > 1e-12) v /= Kokkos::sqrt(v.real()*v.real() + v.imag()*v.imag());
+      else v = Kokkos::complex<T>(0.0,0.0);
     }
 
     template <class RNG>

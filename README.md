@@ -24,4 +24,7 @@ Options:
 --n-sweep number of sweeps
 --cold-start true or false
 --outfilename output filename
+--open-bc-x true or false
+--open-bc-y true or false
+--open-bc-z true or false
 ```

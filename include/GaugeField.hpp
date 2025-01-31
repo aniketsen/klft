@@ -96,6 +96,38 @@ namespace klft {
         return this->array_dims[mu];
       }
 
+      void set_open_bc_x() {
+        auto BulkPolicy = Kokkos::MDRangePolicy<Kokkos::Rank<3>>({0,0,0},{this->get_max_dim(1),this->get_max_dim(2),this->get_max_dim(3)});
+        Kokkos::parallel_for("set_open_bc_x", BulkPolicy, KOKKOS_CLASS_LAMBDA(const int &y, const int &z, const int &t) {
+          #pragma unroll
+          for(int i = 0; i < Nc*Nc; i++) {
+            this->gauge[0][i](this->max_dims[0]-1,y,z,t) = Kokkos::complex<T>(0.0,0.0);
+          }
+        });
+      }
+
+      void set_open_bc_y() {
+        if(Ndim < 3) return;
+        auto BulkPolicy = Kokkos::MDRangePolicy<Kokkos::Rank<3>>({0,0,0},{this->get_max_dim(0),this->get_max_dim(2),this->get_max_dim(3)});
+        Kokkos::parallel_for("set_open_bc_y", BulkPolicy, KOKKOS_CLASS_LAMBDA(const int &x, const int &z, const int &t) {
+          #pragma unroll
+          for(int i = 0; i < Nc*Nc; i++) {
+            this->gauge[1][i](x,this->max_dims[1]-1,z,t) = Kokkos::complex<T>(0.0,0.0);
+          }
+        });
+      }
+
+      void set_open_bc_z() {
+        if(Ndim < 4) return;
+        auto BulkPolicy = Kokkos::MDRangePolicy<Kokkos::Rank<3>>({0,0,0},{this->get_max_dim(0),this->get_max_dim(1),this->get_max_dim(3)});
+        Kokkos::parallel_for("set_open_bc_z", BulkPolicy, KOKKOS_CLASS_LAMBDA(const int &x, const int &y, const int &t) {
+          #pragma unroll
+          for(int i = 0; i < Nc*Nc; i++) {
+            this->gauge[2][i](x,y,this->max_dims[2]-1,t) = Kokkos::complex<T>(0.0,0.0);
+          }
+        });
+      }
+
       KOKKOS_INLINE_FUNCTION void operator()(set_one_s, const int &x, const int &y, const int &z, const int &t, const int &mu) const {
         #pragma unroll
         for(int i = 0; i < Nc*Nc; i++) {

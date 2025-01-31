@@ -17,6 +17,9 @@ int main(int argc, char **argv) {
   size_t n_sweep = 1000;
   bool cold_start = true;
   std::string outfilename = "";
+  bool open_bc_x = false;
+  bool open_bc_y = false;
+  bool open_bc_z = false;
   for(int i = 1; i < argc; i++) {
     if(std::string(argv[i]) == "--gauge-group") {
       gauge_group = argv[i+1];
@@ -57,6 +60,15 @@ int main(int argc, char **argv) {
     if(std::string(argv[i]) == "--outfilename") {
       outfilename = argv[i+1];
     }
+    if(std::string(argv[i]) == "--open-bc-x") {
+      open_bc_x = std::string(argv[i+1]) == "true";
+    }
+    if(std::string(argv[i]) == "--open-bc-y") {
+      open_bc_y = std::string(argv[i+1]) == "true";
+    }
+    if(std::string(argv[i]) == "--open-bc-z") {
+      open_bc_z = std::string(argv[i+1]) == "true";
+    }
     if(std::string(argv[i]) == "--help") {
       std::cout << "Usage: " << argv[0] << " [options]" << std::endl;
       std::cout << "Options:" << std::endl;
@@ -73,17 +85,21 @@ int main(int argc, char **argv) {
       std::cout << "--n-sweep number of sweeps" << std::endl;
       std::cout << "--cold-start true or false" << std::endl;
       std::cout << "--outfilename output filename" << std::endl;
+      std::cout << "--open-bc-x true or false" << std::endl;
+      std::cout << "--open-bc-y true or false" << std::endl;
+      std::cout << "--open-bc-z true or false" << std::endl;
       return 0;
     }
   }
-  if(gauge_group == "SU2" && ndim == 4) klft::Metropolis_SU2_4D<real_t>(LX,LY,LZ,LT,n_hit,beta,delta,seed,n_sweep,cold_start,outfilename);
-  if(gauge_group == "SU2" && ndim == 3) klft::Metropolis_SU2_3D<real_t>(LX,LY,LT,n_hit,beta,delta,seed,n_sweep,cold_start,outfilename);
-  if(gauge_group == "SU2" && ndim == 2) klft::Metropolis_SU2_2D<real_t>(LX,LT,n_hit,beta,delta,seed,n_sweep,cold_start,outfilename);
-  if(gauge_group == "U1" && ndim == 4) klft::Metropolis_U1_4D<real_t>(LX,LY,LZ,LT,n_hit,beta,delta,seed,n_sweep,cold_start,outfilename);
-  if(gauge_group == "U1" && ndim == 3) klft::Metropolis_U1_3D<real_t>(LX,LY,LT,n_hit,beta,delta,seed,n_sweep,cold_start,outfilename);
-  if(gauge_group == "U1" && ndim == 2) klft::Metropolis_U1_2D<real_t>(LX,LT,n_hit,beta,delta,seed,n_sweep,cold_start,outfilename);
-  if(gauge_group == "SU3" && ndim == 4) klft::Metropolis_SU3_4D<real_t>(LX,LY,LZ,LT,n_hit,beta,delta,seed,n_sweep,cold_start,outfilename);
-  if(gauge_group == "SU3" && ndim == 3) klft::Metropolis_SU3_3D<real_t>(LX,LY,LT,n_hit,beta,delta,seed,n_sweep,cold_start,outfilename);
-  if(gauge_group == "SU3" && ndim == 2) klft::Metropolis_SU3_2D<real_t>(LX,LT,n_hit,beta,delta,seed,n_sweep,cold_start,outfilename);
+  bool open_bc[3] = {open_bc_x, open_bc_y, open_bc_z};
+  // if(gauge_group == "SU2" && ndim == 4) klft::Metropolis_SU2_4D<real_t>(LX,LY,LZ,LT,n_hit,beta,delta,seed,n_sweep,cold_start,outfilename,open_bc);
+  // if(gauge_group == "SU2" && ndim == 3) klft::Metropolis_SU2_3D<real_t>(LX,LY,LT,n_hit,beta,delta,seed,n_sweep,cold_start,outfilename,open_bc);
+  // if(gauge_group == "SU2" && ndim == 2) klft::Metropolis_SU2_2D<real_t>(LX,LT,n_hit,beta,delta,seed,n_sweep,cold_start,outfilename,open_bc);
+  if(gauge_group == "U1" && ndim == 4) klft::Metropolis_U1_4D<real_t>(LX,LY,LZ,LT,n_hit,beta,delta,seed,n_sweep,cold_start,outfilename,open_bc);
+  if(gauge_group == "U1" && ndim == 3) klft::Metropolis_U1_3D<real_t>(LX,LY,LT,n_hit,beta,delta,seed,n_sweep,cold_start,outfilename,open_bc);
+  if(gauge_group == "U1" && ndim == 2) klft::Metropolis_U1_2D<real_t>(LX,LT,n_hit,beta,delta,seed,n_sweep,cold_start,outfilename,open_bc);
+  // if(gauge_group == "SU3" && ndim == 4) klft::Metropolis_SU3_4D<real_t>(LX,LY,LZ,LT,n_hit,beta,delta,seed,n_sweep,cold_start,outfilename,open_bc);
+  // if(gauge_group == "SU3" && ndim == 3) klft::Metropolis_SU3_3D<real_t>(LX,LY,LT,n_hit,beta,delta,seed,n_sweep,cold_start,outfilename,open_bc);
+  // if(gauge_group == "SU3" && ndim == 2) klft::Metropolis_SU3_2D<real_t>(LX,LT,n_hit,beta,delta,seed,n_sweep,cold_start,outfilename,open_bc);
   return 0;
 }
