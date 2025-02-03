@@ -47,12 +47,12 @@ namespace klft {
       
       template <int odd_even>
       KOKKOS_INLINE_FUNCTION void operator()(sweep_s<odd_even>, const int &x, const int &y, const int &z, const int &t, const int &mu, T &update) const {
-        if(t%2 == odd_even) return;
         auto generator = rng.get_state();
         T num_accepted = 0.0;
         T delS = 0.0;
-        Group U = gauge_field.get_link(x,y,z,t,mu);
-        Group staple = gauge_field.get_staple(x,y,z,t,mu);
+        const int tt = 2*t + 1*odd_even;
+        Group U = gauge_field.get_link(x,y,z,tt,mu);
+        Group staple = gauge_field.get_staple(x,y,z,tt,mu);
         Group tmp1 = U*staple;
         Group R;
         for(int i = 0; i < n_hit; ++i) {
@@ -67,7 +67,7 @@ namespace klft {
           }
           if(accept) {
             U_new.restoreGauge();
-            gauge_field.set_link(x,y,z,t,mu,U_new);
+            gauge_field.set_link(x,y,z,tt,mu,U_new);
             num_accepted += 1.0;
           }
         }
@@ -86,8 +86,8 @@ namespace klft {
       }
 
       T sweep() {
-        auto BulkPolicy_odd = Kokkos::MDRangePolicy<sweep_s<1>,Kokkos::Rank<5>>({0,0,0,0,0},{gauge_field.get_max_dim(0),gauge_field.get_max_dim(1),gauge_field.get_max_dim(2),gauge_field.get_max_dim(3),gauge_field.get_Ndim()});
-        auto BulkPolicy_even = Kokkos::MDRangePolicy<sweep_s<0>,Kokkos::Rank<5>>({0,0,0,0,0},{gauge_field.get_max_dim(0),gauge_field.get_max_dim(1),gauge_field.get_max_dim(2),gauge_field.get_max_dim(3),gauge_field.get_Ndim()});
+        auto BulkPolicy_odd = Kokkos::MDRangePolicy<sweep_s<1>,Kokkos::Rank<5>>({0,0,0,0,0},{gauge_field.get_max_dim(0),gauge_field.get_max_dim(1),gauge_field.get_max_dim(2),(int)(gauge_field.get_max_dim(3)/2),gauge_field.get_Ndim()});
+        auto BulkPolicy_even = Kokkos::MDRangePolicy<sweep_s<0>,Kokkos::Rank<5>>({0,0,0,0,0},{gauge_field.get_max_dim(0),gauge_field.get_max_dim(1),gauge_field.get_max_dim(2),(int)(gauge_field.get_max_dim(3)/2),gauge_field.get_Ndim()});
         T accept = 0.0;
         T accept_rate = 0.0;
         Kokkos::parallel_reduce("sweep_even", BulkPolicy_even, *this, accept);
