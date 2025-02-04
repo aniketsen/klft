@@ -488,8 +488,9 @@ namespace klft {
 
     template <typename Tin>
     KOKKOS_INLINE_FUNCTION void operator*=(const U1<Tin> &in) {
-      v.real(v.real()*in.v.real() - v.imag()*in.v.imag());
-      v.imag(v.real()*in.v.imag() + v.imag()*in.v.real());
+      T a = v.real()*in.v.real() - v.imag()*in.v.imag();
+      T b = v.real()*in.v.imag() + v.imag()*in.v.real();
+      v = Kokkos::complex<T>(a,b);
     }
 
     template <typename Tin>
