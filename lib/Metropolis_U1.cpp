@@ -84,7 +84,7 @@ namespace klft {
     std::ofstream outfile;
     if(outfilename != "") {
       outfile.open(outfilename);
-      outfile << "step, plaquette, acceptance_rate, time" << std::endl;
+      outfile << "step, plaquette, acceptance_rate, time, wloop_temporal" << std::endl;
     }
     Kokkos::initialize();
     {
@@ -98,17 +98,27 @@ namespace klft {
       if(open_bc[0]) gauge_field.set_open_bc_x();
       if(open_bc[1]) gauge_field.set_open_bc_y();
       std::cout << "Starting Plaquette: " << gauge_field.get_plaquette() << std::endl;
+      std::cout << "Starting Wloop_temporal: " << gauge_field.get_wloop_temporal() << std::endl;
       std::cout << "Starting Metropolis: " << std::endl;
       auto metropolis_start_time = std::chrono::high_resolution_clock::now();
       for(size_t i = 0; i < n_sweep; i++) {
         auto start_time = std::chrono::high_resolution_clock::now();
         T acceptance_rate = metropolis.sweep();
-        T plaquette = gauge_field.get_plaquette();
+        T plaquette = 0.0;
+        T wloop_temporal = 0.0;
+        if(open_bc[0] && open_bc[1]){
+          plaquette = gauge_field.get_plaquette_obc();
+          wloop_temporal = gauge_field.get_wloop_temporal_obc();
+        }
+        else{
+          plaquette = gauge_field.get_plaquette();
+          wloop_temporal = gauge_field.get_wloop_temporal();
+        }
         auto end_time = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> sweep_time = end_time - start_time;
-        std::cout << "Step: " << i << " Plaquette: " << plaquette << " Acceptance Rate: " << acceptance_rate << " Time: " << sweep_time.count() << std::endl;
+        std::cout << "Step: " << i << " Plaquette: " << plaquette << " Acceptance Rate: " << acceptance_rate << " Time: " << sweep_time.count() << " W_temporal: " << wloop_temporal << std::endl;
         if(outfilename != "") {
-          outfile << i << ", " << plaquette << ", " << acceptance_rate << ", " << sweep_time.count() << std::endl;
+            outfile << i << ", " << plaquette << ", " << acceptance_rate << ", " << sweep_time.count() << ", " << wloop_temporal << std::endl;
         }
       }
     auto metropolis_end_time = std::chrono::high_resolution_clock::now();

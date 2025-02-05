@@ -96,9 +96,9 @@ namespace klft {
       return this->max_dims[mu];
     }
 
-      KOKKOS_FUNCTION int get_array_dim(const int &mu) const {
+/*       KOKKOS_FUNCTION int get_array_dim(const int &mu) const {
         return this->array_dims[mu];
-      }
+      } */
 
       void set_open_bc_x() {
         auto BulkPolicy = Kokkos::MDRangePolicy<Kokkos::Rank<3>>({0,0,0},{this->get_max_dim(1),this->get_max_dim(2),this->get_max_dim(3)});
@@ -211,8 +211,8 @@ namespace klft {
     KOKKOS_INLINE_FUNCTION void operator()(wloop_temporal_s, const int &x, const int &y, const int &z, const int &t, T &wloop_temporal) const
     {
       Group U1, U2, U3, U4;
-      int R_side = 3;
-      int T_side = 5;
+      int R_side = 1;
+      int T_side = 1;
       const int mu = Ndim - 1;
 
       #pragma unroll
@@ -335,8 +335,8 @@ namespace klft {
       const int x0 = 0;//(int)(LX / 2);
       const int y0 = 0;//(int)(LY / 2);
       const int z0 = 0;//(int)(LZ / 2);
-      int R_side = 2;
-      int T_side = 2;
+      int R_side = 1;
+      int T_side = 1;
       const int mu = Ndim - 1;
 
       #pragma unroll
@@ -383,7 +383,7 @@ namespace klft {
 
     T get_wloop_temporal_obc(bool Normalize = true)
     {
-      auto BulkPolicy = Kokkos::MDRangePolicy<wloop_temporal_obc_s, Kokkos::Rank<1>>({0}, {this->get_max_dim(3)});
+      auto BulkPolicy = Kokkos::RangePolicy<wloop_temporal_obc_s>(0, this->get_max_dim(3));
       T wloop_temporal_obc = 0.0;
       Kokkos::parallel_reduce("wloop_temporal_obc", BulkPolicy, *this, wloop_temporal_obc);
       if (Normalize)
