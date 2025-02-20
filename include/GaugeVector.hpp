@@ -7,6 +7,8 @@ namespace klft {
   template <typename T, class Group, int Ndim = 4, int Nc = 3>
   class GaugeVector {
   public:
+    struct wilson_line_s {};
+
     using complex_t = Kokkos::complex<T>;
     using DeviceView = Kokkos::View<complex_t****>;
 
@@ -194,7 +196,7 @@ namespace klft {
       this->copy(tmp);
     }
 
-    void shift_minus(const GaugeVector<T,Group,Ndim,Nc> tmp, const int &mu, const int &dist) {
+    void shift_minus(const GaugeVector<T,Group,Ndim,Nc> &tmp, const int &mu, const int &dist) {
       auto BulkPolicy = Kokkos::MDRangePolicy<Kokkos::Rank<5>>({0,0,0,0,0}, {this->get_max_dim(0),this->get_max_dim(1),this->get_max_dim(2),this->get_max_dim(3),Nc*Nc});
       Kokkos::parallel_for("shift_minus", BulkPolicy, KOKKOS_CLASS_LAMBDA(const int &x, const int &y, const int &z, const int &t, const int &i) {
         Kokkos::Array<int,4> site = {x,y,z,t};
@@ -214,6 +216,22 @@ namespace klft {
       return sum;
     }
 
+    void wilson_line(GaugeVector<T,Group,Ndim,Nc> &Umu, const int &mu, const int &Lmu, const bool &reverse = false) {
+      auto BulkPolicy = Kokkos::MDRangePolicy<Kokkos::Rank<4>>({0,0,0,0}, {this->get_max_dim(0),this->get_max_dim(1),this->get_max_dim(2),this->get_max_dim(3)});
+      Kokkos::parallel_for("wilson_line", BulkPolicy, KOKKOS_CLASS_LAMBDA(const int &x, const int &y, const int &z, const int &t) {
+        Kokkos::Array<int,4> site = {x,y,z,t};
+        Group tmp1 = this->get_link(x,y,z,t);
+        #pragma unroll
+        for(int ii = 0; ii < Lmu; ++ii) {
+          Group tmp2 = Umu.get_link(site[0],site[1],site[2],site[3]);
+          tmp1 *= tmp2;
+          site[this->array_dims[mu]] = (site[this->array_dims[mu]] + 1) % this->dims[mu];
+        }
+        this->set_link(x,y,z,t,tmp1);
+      });
+      // Umu.copy(tmp);
+    }
+
   };
 
   template <typename T, class Group, int Ndim, int Nc>
@@ -226,17 +244,11 @@ namespace klft {
     GaugeVector<T,Group,Ndim,Nc> Umu(gauge.dims);
     GaugeVector<T,Group,Ndim,Nc> Unu(gauge.dims);
     Umu.absorb_direction(gauge,mu);
-    U1.copy(Umu);
     Unu.absorb_direction(gauge,nu);
-    U2.copy(Unu);
-    for(int i = 1; i < Lmu; ++i) {
-      Umu.shift_plus(tmp,mu,1);
-      U1.UxU(Umu);
-    }
-    for(int i = 1; i < Lnu; ++i) {
-      Unu.shift_plus(tmp,nu,1);
-      U2.UxU(Unu);
-    }
+    U1.set_one();
+    U1.wilson_line(Umu,mu,Lmu);
+    U2.set_one();
+    U2.wilson_line(Unu,nu,Lnu);
     U3.copy(U1);
     U4.copy(U2);
     U2.shift_plus(tmp,mu,Lmu);
