@@ -35,7 +35,7 @@ namespace klft {
       using GaugeFieldType = GaugeField<T,Group,4,1>;
       using RNG = Kokkos::Random_XorShift1024_Pool<Kokkos::DefaultExecutionSpace>;
       RNG rng = RNG(seed);
-      GaugeFieldType gauge_field = GaugeFieldType(LX,LY,LZ,LT);
+      GaugeFieldType gauge_field = GaugeFieldType({LX,LY,LZ,LT});
       Metropolis<T,Group,GaugeFieldType,RNG> metropolis = Metropolis<T,Group,GaugeFieldType,RNG>(gauge_field,rng,n_hit,beta,delta);
       metropolis.initGauge(cold_start);
       std::cout << "Starting Plaquette: " << gauge_field.get_plaquette() << std::endl;
@@ -89,7 +89,7 @@ namespace klft {
       using GaugeFieldType = GaugeField<T,Group,3,1>;
       using RNG = Kokkos::Random_XorShift1024_Pool<Kokkos::DefaultExecutionSpace>;
       RNG rng = RNG(seed);
-      GaugeFieldType gauge_field = GaugeFieldType(LX,LY,LT);
+      GaugeFieldType gauge_field = GaugeFieldType({LX,LY,LT});
       Metropolis<T,Group,GaugeFieldType,RNG> metropolis = Metropolis<T,Group,GaugeFieldType,RNG>(gauge_field,rng,n_hit,beta,delta);
       metropolis.initGauge(cold_start);
       std::cout << "Starting Plaquette: " << gauge_field.get_plaquette() << std::endl;
@@ -142,7 +142,7 @@ namespace klft {
       using GaugeFieldType = GaugeField<T,Group,2,1>;
       using RNG = Kokkos::Random_XorShift1024_Pool<Kokkos::DefaultExecutionSpace>;
       RNG rng = RNG(seed);
-      GaugeFieldType gauge_field = GaugeFieldType(LX,LT);
+      GaugeFieldType gauge_field = GaugeFieldType({LX,LT});
       Metropolis<T,Group,GaugeFieldType,RNG> metropolis = Metropolis<T,Group,GaugeFieldType,RNG>(gauge_field,rng,n_hit,beta,delta);
       metropolis.initGauge(cold_start);
       std::cout << "Starting Plaquette: " << gauge_field.get_plaquette() << std::endl;

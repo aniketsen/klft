@@ -69,32 +69,7 @@ namespace klft {
         }
       }
     }
-#endif                
-
-    template <int N = Ndim, typename std::enable_if<N == 4, int>::type = 0>
-    GaugeField(const int &_LX, const int &_LY, const int &_LZ, const int &_LT) {
-      this->LX = _LX;
-      this->LY = _LY;
-      this->LZ = _LZ;
-      this->LT = _LT;
-      for(int i = 0; i < Nc*Nc; ++i) {
-        for(int mu = 0; mu < Ndim; ++mu) {
-          this->gauge[mu][i] = DeviceView(Kokkos::view_alloc(Kokkos::WithoutInitializing, "gauge"), LX, LY, LZ, LT);
-        }
-      }
-      // this->gauge = DeviceView(Kokkos::view_alloc(Kokkos::WithoutInitializing, "gauge"), LX, LY, LZ, LT);
-      this->local_dims = {LX,LY,LZ,LT};
-      this->global_dims = {LX,LY,LZ,LT};
-      this->start_dims = {0,0,0,0};
-      this->end_dims = {LX,LY,LZ,LT};
-      this->array_dims = {0,1,2,3};
-#ifdef KLFT_USE_MPI
-      this->comm_dims = {0,0,0,0};
-      this->prev_rank = {-100,-100,-100,-100};
-      this->next_rank = {-100,-100,-100,-100};
-      this->field_length = {LX,LY,LZ,LT};
-#endif      
-    }
+#endif
 
     template <int N = Ndim, typename std::enable_if<N == 4, int>::type = 0>
     GaugeField(const Kokkos::Array<int,4> &_dims) {
@@ -122,31 +97,6 @@ namespace klft {
     }
 
     template <int N = Ndim, typename std::enable_if<N == 3, int>::type = 0>
-    GaugeField(const int &_LX, const int &_LY, const int &_LT) {
-      this->LX = _LX;
-      this->LY = _LY;
-      this->LT = _LT;
-      this->LZ = 1;
-      for(int i = 0; i < Nc*Nc; ++i) {
-        for(int mu = 0; mu < Ndim; ++mu) {
-          this->gauge[mu][i] = DeviceView(Kokkos::view_alloc(Kokkos::WithoutInitializing, "gauge"), LX, LY, LZ, LT);
-        }
-      }
-      // this->gauge = DeviceView(Kokkos::view_alloc(Kokkos::WithoutInitializing, "gauge"), LX, LY, LZ, LT);
-      this->local_dims = {LX,LY,LT};
-      this->global_dims = {LX,LY,LT};
-      this->start_dims = {0,0,0,0};
-      this->end_dims = {LX,LY,LZ,LT};
-      this->array_dims = {0,1,3,-100};
-#ifdef KLFT_USE_MPI
-      this->comm_dims = {0,0,0,0};
-      this->prev_rank = {-100,-100,-100,-100};
-      this->next_rank = {-100,-100,-100,-100};
-      this->field_length = {LX,LY,LZ,LT};
-#endif 
-    }
-
-    template <int N = Ndim, typename std::enable_if<N == 3, int>::type = 0>
     GaugeField(const Kokkos::Array<int,3> &_dims) {
       this->LX = _dims[0];
       this->LY = _dims[1];
@@ -163,31 +113,6 @@ namespace klft {
       this->start_dims = {0,0,0,0};
       this->end_dims = {LX,LY,LZ,LT};
       this->array_dims = {0,1,3,-100};
-#ifdef KLFT_USE_MPI
-      this->comm_dims = {0,0,0,0};
-      this->prev_rank = {-100,-100,-100,-100};
-      this->next_rank = {-100,-100,-100,-100};
-      this->field_length = {LX,LY,LZ,LT};
-#endif 
-    }
-
-    template <int N = Ndim, typename std::enable_if<N == 2, int>::type = 0>
-    GaugeField(const int &_LX, const int &_LT) {
-      this->LX = _LX;
-      this->LT = _LT;
-      this->LY = 1;
-      this->LZ = 1;
-      for(int i = 0; i < Nc*Nc; ++i) {
-        for(int mu = 0; mu < Ndim; ++mu) {
-          this->gauge[mu][i] = DeviceView(Kokkos::view_alloc(Kokkos::WithoutInitializing, "gauge"), LX, LY, LZ, LT);
-        }
-      }
-      // this->gauge = DeviceView(Kokkos::view_alloc(Kokkos::WithoutInitializing, "gauge"), LX, LY, LZ, LT);
-      this->local_dims = {LX,LT};
-      this->global_dims = {LX,LT};
-      this->start_dims = {0,0,0,0};
-      this->end_dims = {LX,LY,LZ,LT};
-      this->array_dims = {0,3,-100,-100};
 #ifdef KLFT_USE_MPI
       this->comm_dims = {0,0,0,0};
       this->prev_rank = {-100,-100,-100,-100};
