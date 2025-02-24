@@ -10,7 +10,7 @@ namespace klft {
 
     static constexpr size_t Nc = 3;
     static constexpr size_t Npar = 9;
-    typedef T real_type;
+    typedef T real_t;
 
     SU3() = default;
 
@@ -278,7 +278,7 @@ namespace klft {
 
     static constexpr size_t Nc = 2;
     static constexpr size_t Npar = 2;
-    typedef T real_type;
+    typedef T real_t;
 
     SU2() = default;
 
@@ -393,7 +393,7 @@ namespace klft {
 
     static constexpr size_t Nc = 1;
     static constexpr size_t Npar = 1;
-    typedef T real_type;
+    typedef T real_t;
 
     U1() = default;
 
