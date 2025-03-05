@@ -15,7 +15,7 @@ namespace klft {
     struct restoreGauge_s {};
     using complex_t = Kokkos::complex<T>;
     using DeviceView = Kokkos::View<complex_t****>;
-    // using HostView = typename DeviceView::HostMirror;
+    using HostView = typename DeviceView::HostMirror;
 
     DeviceView gauge[Ndim][Nc*Nc];
     // HostView gauge_host;
@@ -374,25 +374,667 @@ namespace klft {
     }
 
 #ifdef KLFT_USE_MPI
-    void update_halo_minus(Comm<Ndim> &comm) {
+    auto get_halo_x_plus() {
+      if (!comm_dims[0]) return Kokkos::View<complex_t*****
+#ifndef KLFT_MPI_CUDA
+        ,Kokkos::HostSpace
+#endif
+        >("halo_x_plus",0,0,0,0,0,0);
+      auto halo_x_plus = Kokkos::View<complex_t*****
+#ifndef KLFT_MPI_CUDA
+        ,Kokkos::HostSpace
+#endif
+        >("halo_x_plus",local_dims[1],local_dims[2],local_dims[3],Ndim,Nc*Nc);
       #pragma unroll
       for(int mu = 0; mu < Ndim; mu++) {
         #pragma unroll
         for(int i = 0; i < Nc*Nc; i++) {
-          comm.update_halo_minus(this->gauge[mu][i], this->start_dims, this->end_dims, this->local_dims);
+#ifndef KLFT_MPI_CUDA
+          auto dview = Kokkos::View<complex_t***>("dview",local_dims[1],local_dims[2],local_dims[3]);
+          Kokkos::deep_copy(dview,Kokkos::subview(this->gauge[mu][i],
+                            local_dims[0],Kokkos::make_pair(start_dims[1],end_dims[1]),
+                            Kokkos::make_pair(start_dims[2],end_dims[2]),
+                            Kokkos::make_pair(start_dims[3],end_dims[3])));
+          auto hview = Kokkos::create_mirror_view(dview);
+          Kokkos::deep_copy(hview,dview);
+          Kokkos::deep_copy(Kokkos::subview(halo_x_plus,Kokkos::ALL,Kokkos::ALL,Kokkos::ALL,mu,i),hview);
+#else
+          Kokkos::deep_copy(Kokkos::subview(halo_x_plus,Kokkos::ALL,Kokkos::ALL,Kokkos::ALL,mu,i),
+                            Kokkos::subview(this->gauge[mu][i],
+                            local_dims[0],Kokkos::make_pair(start_dims[1],end_dims[1]),
+                            Kokkos::make_pair(start_dims[2],end_dims[2]),
+                            Kokkos::make_pair(start_dims[3],end_dims[3])));
+#endif
+        }
+      }
+      return halo_x_plus;
+    }
+
+    void set_halo_x_minus(const Kokkos::View<complex_t*****
+#ifndef KLFT_MPI_CUDA
+        ,Kokkos::HostSpace
+#endif
+        > &halo_x_minus) {
+      if (!comm_dims[0]) return;
+      #pragma unroll
+      for(int mu = 0; mu < Ndim; mu++) {
+        #pragma unroll
+        for(int i = 0; i < Nc*Nc; i++) {
+#ifndef KLFT_MPI_CUDA
+          auto dview = Kokkos::View<complex_t***>("dview",local_dims[1],local_dims[2],local_dims[3]);
+          auto hview = Kokkos::create_mirror_view(dview);
+          Kokkos::deep_copy(hview,Kokkos::subview(halo_x_minus,Kokkos::ALL,Kokkos::ALL,Kokkos::ALL,mu,i));
+          Kokkos::deep_copy(dview,hview);
+          Kokkos::deep_copy(Kokkos::subview(this->gauge[mu][i],
+                            0,Kokkos::make_pair(start_dims[1],end_dims[1]),
+                            Kokkos::make_pair(start_dims[2],end_dims[2]),
+                            Kokkos::make_pair(start_dims[3],end_dims[3])),
+                            dview);
+#else
+          Kokkos::deep_copy(Kokkos::subview(this->gauge[mu][i],
+                            0,Kokkos::make_pair(start_dims[1],end_dims[1]),
+                            Kokkos::make_pair(start_dims[2],end_dims[2]),
+                            Kokkos::make_pair(start_dims[3],end_dims[3])),
+                            Kokkos::subview(halo_x_minus,Kokkos::ALL,Kokkos::ALL,Kokkos::ALL,mu,i));
+#endif
+        }
+      }
+    }
+
+    auto get_halo_x_minus() {
+      if (!comm_dims[0]) return Kokkos::View<complex_t*****
+#ifndef KLFT_MPI_CUDA
+        ,Kokkos::HostSpace
+#endif
+        >("halo_x_minus",0,0,0,0,0,0);
+      auto halo_x_minus = Kokkos::View<complex_t*****
+#ifndef KLFT_MPI_CUDA
+        ,Kokkos::HostSpace
+#endif
+        >("halo_x_minus",local_dims[1],local_dims[2],local_dims[3],Ndim,Nc*Nc);
+      #pragma unroll
+      for(int mu = 0; mu < Ndim; mu++) {
+        #pragma unroll
+        for(int i = 0; i < Nc*Nc; i++) {
+#ifndef KLFT_MPI_CUDA
+          auto dview = Kokkos::View<complex_t***>("dview",local_dims[1],local_dims[2],local_dims[3]);
+          Kokkos::deep_copy(dview,Kokkos::subview(this->gauge[mu][i],
+                            1,Kokkos::make_pair(start_dims[1],end_dims[1]),
+                            Kokkos::make_pair(start_dims[2],end_dims[2]),
+                            Kokkos::make_pair(start_dims[3],end_dims[3])));
+          auto hview = Kokkos::create_mirror_view(dview);
+          Kokkos::deep_copy(hview,dview);
+          Kokkos::deep_copy(Kokkos::subview(halo_x_minus,Kokkos::ALL,Kokkos::ALL,Kokkos::ALL,mu,i),hview);
+#else
+          Kokkos::deep_copy(Kokkos::subview(halo_x_minus,Kokkos::ALL,Kokkos::ALL,Kokkos::ALL,mu,i),
+                            Kokkos::subview(this->gauge[mu][i],
+                            1,Kokkos::make_pair(start_dims[1],end_dims[1]),
+                            Kokkos::make_pair(start_dims[2],end_dims[2]),
+                            Kokkos::make_pair(start_dims[3],end_dims[3])));
+#endif
+        }
+      }
+      return halo_x_minus;
+    }
+
+    void set_halo_x_plus(const Kokkos::View<complex_t*****
+#ifndef KLFT_MPI_CUDA
+        ,Kokkos::HostSpace
+#endif
+        > &halo_x_plus) {
+      if (!comm_dims[0]) return;
+      #pragma unroll
+      for(int mu = 0; mu < Ndim; mu++) {
+        #pragma unroll
+        for(int i = 0; i < Nc*Nc; i++) {
+#ifndef KLFT_MPI_CUDA
+          auto dview = Kokkos::View<complex_t***>("dview",local_dims[1],local_dims[2],local_dims[3]);
+          auto hview = Kokkos::create_mirror_view(dview);
+          Kokkos::deep_copy(hview,Kokkos::subview(halo_x_plus,Kokkos::ALL,Kokkos::ALL,Kokkos::ALL,mu,i));
+          Kokkos::deep_copy(dview,hview);
+          Kokkos::deep_copy(Kokkos::subview(this->gauge[mu][i],
+                            local_dims[0]+1,Kokkos::make_pair(start_dims[1],end_dims[1]),
+                            Kokkos::make_pair(start_dims[2],end_dims[2]),
+                            Kokkos::make_pair(start_dims[3],end_dims[3])),
+                            dview);
+#else
+          Kokkos::deep_copy(Kokkos::subview(this->gauge[mu][i],
+                            local_dims[0]+1,Kokkos::make_pair(start_dims[1],end_dims[1]),
+                            Kokkos::make_pair(start_dims[2],end_dims[2]),
+                            Kokkos::make_pair(start_dims[3],end_dims[3])),
+                            Kokkos::subview(halo_x_plus,Kokkos::ALL,Kokkos::ALL,Kokkos::ALL,mu,i));
+#endif
+        }
+      }
+    }
+
+    auto get_halo_y_plus() {
+      if (!comm_dims[1]) return Kokkos::View<complex_t*****
+#ifndef KLFT_MPI_CUDA
+        ,Kokkos::HostSpace
+#endif
+        >("halo_y_plus",0,0,0,0,0,0);
+      auto halo_y_plus = Kokkos::View<complex_t*****
+#ifndef KLFT_MPI_CUDA
+        ,Kokkos::HostSpace
+#endif
+        >("halo_y_plus",local_dims[0],local_dims[2],local_dims[3],Ndim,Nc*Nc);
+      #pragma unroll
+      for(int mu = 0; mu < Ndim; mu++) {
+        #pragma unroll
+        for(int i = 0; i < Nc*Nc; i++) {
+#ifndef KLFT_MPI_CUDA
+          auto dview = Kokkos::View<complex_t***>("dview",local_dims[0],local_dims[2],local_dims[3]);
+          Kokkos::deep_copy(dview,Kokkos::subview(this->gauge[mu][i],
+                            Kokkos::make_pair(start_dims[0],end_dims[0]),local_dims[1],
+                            Kokkos::make_pair(start_dims[2],end_dims[2]),
+                            Kokkos::make_pair(start_dims[3],end_dims[3])));
+          auto hview = Kokkos::create_mirror_view(dview);
+          Kokkos::deep_copy(hview,dview);
+          Kokkos::deep_copy(Kokkos::subview(halo_y_plus,Kokkos::ALL,Kokkos::ALL,Kokkos::ALL,mu,i),hview);
+#else
+          Kokkos::deep_copy(Kokkos::subview(halo_y_plus,Kokkos::ALL,Kokkos::ALL,Kokkos::ALL,mu,i),
+                            Kokkos::subview(this->gauge[mu][i],
+                            Kokkos::make_pair(start_dims[0],end_dims[0]),local_dims[1],
+                            Kokkos::make_pair(start_dims[2],end_dims[2]),
+                            Kokkos::make_pair(start_dims[3],end_dims[3])));
+#endif
+        }
+      }
+      return halo_y_plus;
+    }
+
+    void set_halo_y_minus(const Kokkos::View<complex_t*****
+#ifndef KLFT_MPI_CUDA
+        ,Kokkos::HostSpace
+#endif
+        > &halo_y_minus) {
+      if (!comm_dims[1]) return;
+      #pragma unroll
+      for(int mu = 0; mu < Ndim; mu++) {
+        #pragma unroll
+        for(int i = 0; i < Nc*Nc; i++) {
+#ifndef KLFT_MPI_CUDA
+          auto dview = Kokkos::View<complex_t***>("dview",local_dims[0],local_dims[2],local_dims[3]);
+          auto hview = Kokkos::create_mirror_view(dview);
+          Kokkos::deep_copy(hview,Kokkos::subview(halo_y_minus,Kokkos::ALL,Kokkos::ALL,Kokkos::ALL,mu,i));
+          Kokkos::deep_copy(dview,hview);
+          Kokkos::deep_copy(Kokkos::subview(this->gauge[mu][i],
+                            Kokkos::make_pair(start_dims[0],end_dims[0]),0,
+                            Kokkos::make_pair(start_dims[2],end_dims[2]),
+                            Kokkos::make_pair(start_dims[3],end_dims[3])),
+                            dview);
+#else
+          Kokkos::deep_copy(Kokkos::subview(this->gauge[mu][i],
+                            Kokkos::make_pair(start_dims[0],end_dims[0]),0,
+                            Kokkos::make_pair(start_dims[2],end_dims[2]),
+                            Kokkos::make_pair(start_dims[3],end_dims[3])),
+                            Kokkos::subview(halo_y_minus,Kokkos::ALL,Kokkos::ALL,Kokkos::ALL,mu,i));
+#endif
+        }
+      }
+    }
+
+    auto get_halo_y_minus() {
+      if (!comm_dims[1]) return Kokkos::View<complex_t*****
+#ifndef KLFT_MPI_CUDA
+        ,Kokkos::HostSpace
+#endif
+        >("halo_y_minus",0,0,0,0,0,0);
+      auto halo_y_minus = Kokkos::View<complex_t*****
+#ifndef KLFT_MPI_CUDA
+        ,Kokkos::HostSpace
+#endif
+        >("halo_y_minus",local_dims[0],local_dims[2],local_dims[3],Ndim,Nc*Nc);
+      #pragma unroll
+      for(int mu = 0; mu < Ndim; mu++) {
+        #pragma unroll
+        for(int i = 0; i < Nc*Nc; i++) {
+#ifndef KLFT_MPI_CUDA
+          auto dview = Kokkos::View<complex_t***>("dview",local_dims[0],local_dims[2],local_dims[3]);
+          Kokkos::deep_copy(dview,Kokkos::subview(this->gauge[mu][i],
+                            Kokkos::make_pair(start_dims[0],end_dims[0]),1,
+                            Kokkos::make_pair(start_dims[2],end_dims[2]),
+                            Kokkos::make_pair(start_dims[3],end_dims[3])));
+          auto hview = Kokkos::create_mirror_view(dview);
+          Kokkos::deep_copy(hview,dview);
+          Kokkos::deep_copy(Kokkos::subview(halo_y_minus,Kokkos::ALL,Kokkos::ALL,Kokkos::ALL,mu,i),hview);
+#else
+          Kokkos::deep_copy(Kokkos::subview(halo_y_minus,Kokkos::ALL,Kokkos::ALL,Kokkos::ALL,mu,i),
+                            Kokkos::subview(this->gauge[mu][i],
+                            Kokkos::make_pair(start_dims[0],end_dims[0]),1,
+                            Kokkos::make_pair(start_dims[2],end_dims[2]),
+                            Kokkos::make_pair(start_dims[3],end_dims[3])));
+#endif
+        }
+      }
+      return halo_y_minus;
+    }
+
+    void set_halo_y_plus(const Kokkos::View<complex_t*****
+#ifndef KLFT_MPI_CUDA
+        ,Kokkos::HostSpace
+#endif
+        > &halo_y_plus) {
+      if (!comm_dims[1]) return;
+      #pragma unroll
+      for(int mu = 0; mu < Ndim; mu++) {
+        #pragma unroll
+        for(int i = 0; i < Nc*Nc; i++) {
+#ifndef KLFT_MPI_CUDA
+          auto dview = Kokkos::View<complex_t***>("dview",local_dims[0],local_dims[2],local_dims[3]);
+          auto hview = Kokkos::create_mirror_view(dview);
+          Kokkos::deep_copy(hview,Kokkos::subview(halo_y_plus,Kokkos::ALL,Kokkos::ALL,Kokkos::ALL,mu,i));
+          Kokkos::deep_copy(dview,hview);
+          Kokkos::deep_copy(Kokkos::subview(this->gauge[mu][i],
+                            Kokkos::make_pair(start_dims[0],end_dims[0]),local_dims[1]+1,
+                            Kokkos::make_pair(start_dims[2],end_dims[2]),
+                            Kokkos::make_pair(start_dims[3],end_dims[3])),
+                            dview);
+#else
+          Kokkos::deep_copy(Kokkos::subview(this->gauge[mu][i],
+                            Kokkos::make_pair(start_dims[0],end_dims[0]),local_dims[1]+1,
+                            Kokkos::make_pair(start_dims[2],end_dims[2]),
+                            Kokkos::make_pair(start_dims[3],end_dims[3])),
+                            Kokkos::subview(halo_y_plus,Kokkos::ALL,Kokkos::ALL,Kokkos::ALL,mu,i));
+#endif
+        }
+      }
+    }
+
+    auto get_halo_z_plus() {
+      if (!comm_dims[2]) return Kokkos::View<complex_t*****
+#ifndef KLFT_MPI_CUDA
+        ,Kokkos::HostSpace
+#endif
+        >("halo_z_plus",0,0,0,0,0,0);
+      auto halo_z_plus = Kokkos::View<complex_t*****
+#ifndef KLFT_MPI_CUDA
+        ,Kokkos::HostSpace
+#endif
+        >("halo_z_plus",local_dims[0],local_dims[1],local_dims[3],Ndim,Nc*Nc);
+      #pragma unroll
+      for(int mu = 0; mu < Ndim; mu++) {
+        #pragma unroll
+        for(int i = 0; i < Nc*Nc; i++) {
+#ifndef KLFT_MPI_CUDA
+          auto dview = Kokkos::View<complex_t***>("dview",local_dims[0],local_dims[1],local_dims[3]);
+          Kokkos::deep_copy(dview,Kokkos::subview(this->gauge[mu][i],
+                            Kokkos::make_pair(start_dims[0],end_dims[0]),
+                            Kokkos::make_pair(start_dims[1],end_dims[1]),local_dims[2],
+                            Kokkos::make_pair(start_dims[3],end_dims[3])));
+          auto hview = Kokkos::create_mirror_view(dview);
+          Kokkos::deep_copy(hview,dview);
+          Kokkos::deep_copy(Kokkos::subview(halo_z_plus,Kokkos::ALL,Kokkos::ALL,Kokkos::ALL,mu,i),hview);
+#else
+          Kokkos::deep_copy(Kokkos::subview(halo_z_plus,Kokkos::ALL,Kokkos::ALL,Kokkos::ALL,mu,i),
+                            Kokkos::subview(this->gauge[mu][i],
+                            Kokkos::make_pair(start_dims[0],end_dims[0]),
+                            Kokkos::make_pair(start_dims[1],end_dims[1]),local_dims[2],
+                            Kokkos::make_pair(start_dims[3],end_dims[3])));
+#endif
+        }
+      }
+      return halo_z_plus;
+    }
+
+    void set_halo_z_minus(const Kokkos::View<complex_t*****
+#ifndef KLFT_MPI_CUDA
+        ,Kokkos::HostSpace
+#endif
+        > &halo_z_minus) {
+      if (!comm_dims[2]) return;
+      #pragma unroll
+      for(int mu = 0; mu < Ndim; mu++) {
+        #pragma unroll
+        for(int i = 0; i < Nc*Nc; i++) {
+#ifndef KLFT_MPI_CUDA
+          auto dview = Kokkos::View<complex_t***>("dview",local_dims[0],local_dims[1],local_dims[3]);
+          auto hview = Kokkos::create_mirror_view(dview);
+          Kokkos::deep_copy(hview,Kokkos::subview(halo_z_minus,Kokkos::ALL,Kokkos::ALL,Kokkos::ALL,mu,i));
+          Kokkos::deep_copy(dview,hview);
+          Kokkos::deep_copy(Kokkos::subview(this->gauge[mu][i],
+                            Kokkos::make_pair(start_dims[0],end_dims[0]),
+                            Kokkos::make_pair(start_dims[1],end_dims[1]),0,
+                            Kokkos::make_pair(start_dims[3],end_dims[3])),
+                            dview);
+#else
+          Kokkos::deep_copy(Kokkos::subview(this->gauge[mu][i],
+                            Kokkos::make_pair(start_dims[0],end_dims[0]),
+                            Kokkos::make_pair(start_dims[1],end_dims[1]),0,
+                            Kokkos::make_pair(start_dims[3],end_dims[3])),
+                            Kokkos::subview(halo_z_minus,Kokkos::ALL,Kokkos::ALL,Kokkos::ALL,mu,i));
+#endif
+        }
+      }
+    }
+
+    auto get_halo_z_minus() {
+      if (!comm_dims[2]) return Kokkos::View<complex_t*****
+#ifndef KLFT_MPI_CUDA
+        ,Kokkos::HostSpace
+#endif
+        >("halo_z_minus",0,0,0,0,0,0);
+      auto halo_z_minus = Kokkos::View<complex_t*****
+#ifndef KLFT_MPI_CUDA
+        ,Kokkos::HostSpace
+#endif
+        >("halo_z_minus",local_dims[0],local_dims[1],local_dims[3],Ndim,Nc*Nc);
+      #pragma unroll
+      for(int mu = 0; mu < Ndim; mu++) {
+        #pragma unroll
+        for(int i = 0; i < Nc*Nc; i++) {
+#ifndef KLFT_MPI_CUDA
+          auto dview = Kokkos::View<complex_t***>("dview",local_dims[0],local_dims[1],local_dims[3]);
+          Kokkos::deep_copy(dview,Kokkos::subview(this->gauge[mu][i],
+                            Kokkos::make_pair(start_dims[0],end_dims[0]),
+                            Kokkos::make_pair(start_dims[1],end_dims[1]),1,
+                            Kokkos::make_pair(start_dims[3],end_dims[3])));
+          auto hview = Kokkos::create_mirror_view(dview);
+          Kokkos::deep_copy(hview,dview);
+          Kokkos::deep_copy(Kokkos::subview(halo_z_minus,Kokkos::ALL,Kokkos::ALL,Kokkos::ALL,mu,i),hview);
+#else
+          Kokkos::deep_copy(Kokkos::subview(halo_z_minus,Kokkos::ALL,Kokkos::ALL,Kokkos::ALL,mu,i),
+                            Kokkos::subview(this->gauge[mu][i],
+                            Kokkos::make_pair(start_dims[0],end_dims[0]),
+                            Kokkos::make_pair(start_dims[1],end_dims[1]),1,
+                            Kokkos::make_pair(start_dims[3],end_dims[3])));
+#endif
+        }
+      }
+      return halo_z_minus;
+    }
+
+    void set_halo_z_plus(const Kokkos::View<complex_t*****
+#ifndef KLFT_MPI_CUDA
+        ,Kokkos::HostSpace
+#endif
+        > &halo_z_plus) {
+      if (!comm_dims[2]) return;
+      #pragma unroll
+      for(int mu = 0; mu < Ndim; mu++) {
+        #pragma unroll
+        for(int i = 0; i < Nc*Nc; i++) {
+#ifndef KLFT_MPI_CUDA
+          auto dview = Kokkos::View<complex_t***>("dview",local_dims[0],local_dims[1],local_dims[3]);
+          auto hview = Kokkos::create_mirror_view(dview);
+          Kokkos::deep_copy(hview,Kokkos::subview(halo_z_plus,Kokkos::ALL,Kokkos::ALL,Kokkos::ALL,mu,i));
+          Kokkos::deep_copy(dview,hview);
+          Kokkos::deep_copy(Kokkos::subview(this->gauge[mu][i],
+                            Kokkos::make_pair(start_dims[0],end_dims[0]),
+                            Kokkos::make_pair(start_dims[1],end_dims[1]),local_dims[2]+1,
+                            Kokkos::make_pair(start_dims[3],end_dims[3])),
+                            dview);
+#else
+          Kokkos::deep_copy(Kokkos::subview(this->gauge[mu][i],
+                            Kokkos::make_pair(start_dims[0],end_dims[0]),
+                            Kokkos::make_pair(start_dims[1],end_dims[1]),local_dims[2]+1,
+                            Kokkos::make_pair(start_dims[3],end_dims[3])),
+                            Kokkos::subview(halo_z_plus,Kokkos::ALL,Kokkos::ALL,Kokkos::ALL,mu,i));
+#endif
+        }
+      }
+    }
+
+    auto get_halo_t_plus() {
+      if (!comm_dims[3]) return Kokkos::View<complex_t*****
+#ifndef KLFT_MPI_CUDA
+        ,Kokkos::HostSpace
+#endif
+        >("halo_t_plus",0,0,0,0,0,0);
+      auto halo_t_plus = Kokkos::View<complex_t*****
+#ifndef KLFT_MPI_CUDA
+        ,Kokkos::HostSpace
+#endif
+        >("halo_t_plus",local_dims[0],local_dims[1],local_dims[2],Ndim,Nc*Nc);
+      #pragma unroll
+      for(int mu = 0; mu < Ndim; mu++) {
+        #pragma unroll
+        for(int i = 0; i < Nc*Nc; i++) {
+#ifndef KLFT_MPI_CUDA
+          auto dview = Kokkos::View<complex_t***>("dview",local_dims[0],local_dims[1],local_dims[2]);
+          Kokkos::deep_copy(dview,Kokkos::subview(this->gauge[mu][i],
+                            Kokkos::make_pair(start_dims[0],end_dims[0]),
+                            Kokkos::make_pair(start_dims[1],end_dims[1]),
+                            Kokkos::make_pair(start_dims[2],end_dims[2]),local_dims[3]));
+          auto hview = Kokkos::create_mirror_view(dview);
+          Kokkos::deep_copy(hview,dview);
+          Kokkos::deep_copy(Kokkos::subview(halo_t_plus,Kokkos::ALL,Kokkos::ALL,Kokkos::ALL,mu,i),hview);
+#else
+          Kokkos::deep_copy(Kokkos::subview(halo_t_plus,Kokkos::ALL,Kokkos::ALL,Kokkos::ALL,mu,i),
+                            Kokkos::subview(this->gauge[mu][i],
+                            Kokkos::make_pair(start_dims[0],end_dims[0]),
+                            Kokkos::make_pair(start_dims[1],end_dims[1]),
+                            Kokkos::make_pair(start_dims[2],end_dims[2]),local_dims[3]));
+#endif
+        }
+      }
+      return halo_t_plus;
+    }
+
+    void set_halo_t_minus(const Kokkos::View<complex_t*****
+#ifndef KLFT_MPI_CUDA
+        ,Kokkos::HostSpace
+#endif
+        > &halo_t_minus) {
+      if (!comm_dims[3]) return;
+      #pragma unroll
+      for(int mu = 0; mu < Ndim; mu++) {
+        #pragma unroll
+        for(int i = 0; i < Nc*Nc; i++) {
+#ifndef KLFT_MPI_CUDA
+          auto dview = Kokkos::View<complex_t***>("dview",local_dims[0],local_dims[1],local_dims[2]);
+          auto hview = Kokkos::create_mirror_view(dview);
+          Kokkos::deep_copy(hview,Kokkos::subview(halo_t_minus,Kokkos::ALL,Kokkos::ALL,Kokkos::ALL,mu,i));
+          Kokkos::deep_copy(dview,hview);
+          Kokkos::deep_copy(Kokkos::subview(this->gauge[mu][i],
+                            Kokkos::make_pair(start_dims[0],end_dims[0]),
+                            Kokkos::make_pair(start_dims[1],end_dims[1]),
+                            Kokkos::make_pair(start_dims[2],end_dims[2]),0),
+                            dview);
+#else
+          Kokkos::deep_copy(Kokkos::subview(this->gauge[mu][i],
+                            Kokkos::make_pair(start_dims[0],end_dims[0]),
+                            Kokkos::make_pair(start_dims[1],end_dims[1]),
+                            Kokkos::make_pair(start_dims[2],end_dims[2]),0),
+                            Kokkos::subview(halo_t_minus,Kokkos::ALL,Kokkos::ALL,Kokkos::ALL,mu,i));
+#endif
+        }
+      }
+    }
+
+    auto get_halo_t_minus() {
+      if (!comm_dims[3]) return Kokkos::View<complex_t*****
+#ifndef KLFT_MPI_CUDA
+        ,Kokkos::HostSpace
+#endif
+        >("halo_t_minus",0,0,0,0,0,0);
+      auto halo_t_minus = Kokkos::View<complex_t*****
+#ifndef KLFT_MPI_CUDA
+        ,Kokkos::HostSpace
+#endif
+        >("halo_t_minus",local_dims[0],local_dims[1],local_dims[2],Ndim,Nc*Nc);
+      #pragma unroll
+      for(int mu = 0; mu < Ndim; mu++) {
+        #pragma unroll
+        for(int i = 0; i < Nc*Nc; i++) {
+#ifndef KLFT_MPI_CUDA
+          auto dview = Kokkos::View<complex_t***>("dview",local_dims[0],local_dims[1],local_dims[2]);
+          Kokkos::deep_copy(dview,Kokkos::subview(this->gauge[mu][i],
+                            Kokkos::make_pair(start_dims[0],end_dims[0]),
+                            Kokkos::make_pair(start_dims[1],end_dims[1]),
+                            Kokkos::make_pair(start_dims[2],end_dims[2]),1));
+          auto hview = Kokkos::create_mirror_view(dview);
+          Kokkos::deep_copy(hview,dview);
+          Kokkos::deep_copy(Kokkos::subview(halo_t_minus,Kokkos::ALL,Kokkos::ALL,Kokkos::ALL,mu,i),hview);
+#else
+          Kokkos::deep_copy(Kokkos::subview(halo_t_minus,Kokkos::ALL,Kokkos::ALL,Kokkos::ALL,mu,i),
+                            Kokkos::subview(this->gauge[mu][i],
+                            Kokkos::make_pair(start_dims[0],end_dims[0]),
+                            Kokkos::make_pair(start_dims[1],end_dims[1]),
+                            Kokkos::make_pair(start_dims[2],end_dims[2]),1));
+#endif        
+        }
+      }
+      return halo_t_minus;
+    }
+
+    void set_halo_t_plus(const Kokkos::View<complex_t*****
+#ifndef KLFT_MPI_CUDA
+        ,Kokkos::HostSpace
+#endif
+        > &halo_t_plus) {
+      if (!comm_dims[3]) return;
+      #pragma unroll
+      for(int mu = 0; mu < Ndim; mu++) {
+        #pragma unroll
+        for(int i = 0; i < Nc*Nc; i++) {
+#ifndef KLFT_MPI_CUDA
+          auto dview = Kokkos::View<complex_t***>("dview",local_dims[0],local_dims[1],local_dims[2]);
+          auto hview = Kokkos::create_mirror_view(dview);
+          Kokkos::deep_copy(hview,Kokkos::subview(halo_t_plus,Kokkos::ALL,Kokkos::ALL,Kokkos::ALL,mu,i));
+          Kokkos::deep_copy(dview,hview);
+          Kokkos::deep_copy(Kokkos::subview(this->gauge[mu][i],
+                            Kokkos::make_pair(start_dims[0],end_dims[0]),
+                            Kokkos::make_pair(start_dims[1],end_dims[1]),
+                            Kokkos::make_pair(start_dims[2],end_dims[2]),local_dims[3]+1),
+                            dview);
+#else
+          Kokkos::deep_copy(Kokkos::subview(this->gauge[mu][i],
+                            Kokkos::make_pair(start_dims[0],end_dims[0]),
+                            Kokkos::make_pair(start_dims[1],end_dims[1]),
+                            Kokkos::make_pair(start_dims[2],end_dims[2]),local_dims[3]+1),
+                            Kokkos::subview(halo_t_plus,Kokkos::ALL,Kokkos::ALL,Kokkos::ALL,mu,i));
+#endif
         }
       }
     }
 
     void update_halo_plus(Comm<Ndim> &comm) {
-      #pragma unroll
-      for(int mu = 0; mu < Ndim; mu++) {
-        #pragma unroll
-        for(int i = 0; i < Nc*Nc; i++) {
-          comm.update_halo_plus(this->gauge[mu][i], this->start_dims, this->end_dims, this->local_dims);
-        }
+      MPI_Request req[20];
+      int count = 0;
+      MPI_Datatype mpi_datatype = get_mpi_datatype(this->gauge[0][0]);
+      auto halo_x_send_minus = get_halo_x_minus();
+      auto halo_x_recv_plus = Kokkos::View<complex_t*****
+#ifndef KLFT_MPI_CUDA
+        ,Kokkos::HostSpace
+#endif
+        >("halo_x_recv_plus",halo_x_send_minus.extent(0),halo_x_send_minus.extent(1),halo_x_send_minus.extent(2),
+                             halo_x_send_minus.extent(3),halo_x_send_minus.extent(4));
+      auto halo_y_send_minus = get_halo_y_minus();
+      auto halo_y_recv_plus = Kokkos::View<complex_t*****
+#ifndef KLFT_MPI_CUDA
+        ,Kokkos::HostSpace
+#endif
+        >("halo_y_recv_plus",
+                              halo_y_send_minus.extent(0),halo_y_send_minus.extent(1),halo_y_send_minus.extent(2),
+                              halo_y_send_minus.extent(3),halo_y_send_minus.extent(4));
+      auto halo_z_send_minus = get_halo_z_minus();
+      auto halo_z_recv_plus = Kokkos::View<complex_t*****
+#ifndef KLFT_MPI_CUDA
+        ,Kokkos::HostSpace
+#endif
+        >("halo_z_recv_plus",
+                              halo_z_send_minus.extent(0),halo_z_send_minus.extent(1),halo_z_send_minus.extent(2),
+                              halo_z_send_minus.extent(3),halo_z_send_minus.extent(4));
+      auto halo_t_send_minus = get_halo_t_minus();
+      auto halo_t_recv_plus = Kokkos::View<complex_t*****
+#ifndef KLFT_MPI_CUDA
+        ,Kokkos::HostSpace
+#endif
+        >("halo_t_recv_plus",
+                              halo_t_send_minus.extent(0),halo_t_send_minus.extent(1),halo_t_send_minus.extent(2),
+                              halo_t_send_minus.extent(3),halo_t_send_minus.extent(4));
+      if(comm_dims[0]) {
+        MPI_Isend(halo_x_send_minus.data(), size_t(halo_x_send_minus.size()), mpi_datatype, prev_rank[0], 0, comm, &req[count]);
+        MPI_Irecv(halo_x_recv_plus.data(), size_t(halo_x_recv_plus.size()), mpi_datatype, next_rank[0], 0, comm, &req[count]);
+        count++;
       }
+      if(comm_dims[1]) {
+        MPI_Isend(halo_y_send_minus.data(), size_t(halo_y_send_minus.size()), mpi_datatype, prev_rank[1], 1, comm, &req[count]);
+        MPI_Irecv(halo_y_recv_plus.data(), size_t(halo_y_recv_plus.size()), mpi_datatype, next_rank[1], 1, comm, &req[count]);
+        count++;
+      }
+      if(comm_dims[2]) {
+        MPI_Isend(halo_z_send_minus.data(), size_t(halo_z_send_minus.size()), mpi_datatype, prev_rank[2], 2, comm, &req[count]);
+        MPI_Irecv(halo_z_recv_plus.data(), size_t(halo_z_recv_plus.size()), mpi_datatype, next_rank[2], 2, comm, &req[count]);
+        count++;
+      }
+      if(comm_dims[3]) {
+        MPI_Isend(halo_t_send_minus.data(), size_t(halo_t_send_minus.size()), mpi_datatype, prev_rank[3], 3, comm, &req[count]);
+        MPI_Irecv(halo_t_recv_plus.data(), size_t(halo_t_recv_plus.size()), mpi_datatype, next_rank[3], 3, comm, &req[count]);
+        count++;
+      }
+      MPI_Waitall(count, req, MPI_STATUSES_IGNORE);
+      set_halo_x_plus(halo_x_recv_plus);
+      set_halo_y_plus(halo_y_recv_plus);
+      set_halo_z_plus(halo_z_recv_plus);
+      set_halo_t_plus(halo_t_recv_plus);
     }
+
+    void update_halo_minus(Comm<Ndim> &comm) {
+      MPI_Request req[20];
+      int count = 0;
+      MPI_Datatype mpi_datatype = get_mpi_datatype(this->gauge[0][0]);
+      auto halo_x_send_plus = get_halo_x_plus();
+      auto halo_x_recv_minus = Kokkos::View<complex_t*****
+#ifndef KLFT_MPI_CUDA
+        ,Kokkos::HostSpace
+#endif
+        >("halo_x_recv_minus",halo_x_send_plus.extent(0),halo_x_send_plus.extent(1),halo_x_send_plus.extent(2),
+                             halo_x_send_plus.extent(3),halo_x_send_plus.extent(4));
+      auto halo_y_send_plus = get_halo_y_plus();
+      auto halo_y_recv_minus = Kokkos::View<complex_t*****
+#ifndef KLFT_MPI_CUDA
+        ,Kokkos::HostSpace
+#endif
+        >("halo_y_recv_minus",
+                              halo_y_send_plus.extent(0),halo_y_send_plus.extent(1),halo_y_send_plus.extent(2),
+                              halo_y_send_plus.extent(3),halo_y_send_plus.extent(4));
+      auto halo_z_send_plus = get_halo_z_plus();
+      auto halo_z_recv_minus = Kokkos::View<complex_t*****
+#ifndef KLFT_MPI_CUDA
+        ,Kokkos::HostSpace
+#endif
+        >("halo_z_recv_minus",
+                              halo_z_send_plus.extent(0),halo_z_send_plus.extent(1),halo_z_send_plus.extent(2),
+                              halo_z_send_plus.extent(3),halo_z_send_plus.extent(4));
+      auto halo_t_send_plus = get_halo_t_plus();
+      auto halo_t_recv_minus = Kokkos::View<complex_t*****
+#ifndef KLFT_MPI_CUDA
+        ,Kokkos::HostSpace
+#endif
+        >("halo_t_recv_minus",
+                              halo_t_send_plus.extent(0),halo_t_send_plus.extent(1),halo_t_send_plus.extent(2),
+                              halo_t_send_plus.extent(3),halo_t_send_plus.extent(4));
+      if(comm_dims[0]) {
+        MPI_Isend(halo_x_send_plus.data(), size_t(halo_x_send_plus.size()), mpi_datatype, next_rank[0], 0, comm, &req[count]);
+        MPI_Irecv(halo_x_recv_minus.data(), size_t(halo_x_recv_minus.size()), mpi_datatype, prev_rank[0], 0, comm, &req[count]);
+        count++;
+      }
+      if(comm_dims[1]) {
+        MPI_Isend(halo_y_send_plus.data(), size_t(halo_y_send_plus.size()), mpi_datatype, next_rank[1], 1, comm, &req[count]);
+        MPI_Irecv(halo_y_recv_minus.data(), size_t(halo_y_recv_minus.size()), mpi_datatype, prev_rank[1], 1, comm, &req[count]);
+        count++;
+      }
+      if(comm_dims[2]) {
+        MPI_Isend(halo_z_send_plus.data(), size_t(halo_z_send_plus.size()), mpi_datatype, next_rank[2], 2, comm, &req[count]);
+        MPI_Irecv(halo_z_recv_minus.data(), size_t(halo_z_recv_minus.size()), mpi_datatype, prev_rank[2], 2, comm, &req[count]);
+        count++;
+      }
+      if(comm_dims[3]) {
+        MPI_Isend(halo_t_send_plus.data(), size_t(halo_t_send_plus.size()), mpi_datatype, next_rank[3], 3, comm, &req[count]);
+        MPI_Irecv(halo_t_recv_minus.data(), size_t(halo_t_recv_minus.size()), mpi_datatype, prev_rank[3], 3, comm, &req[count]);
+        count++;
+      }
+      MPI_Waitall(count, req, MPI_STATUSES_IGNORE);
+      set_halo_x_minus(halo_x_recv_minus);
+      set_halo_y_minus(halo_y_recv_minus);
+      set_halo_z_minus(halo_z_recv_minus);
+      set_halo_t_minus(halo_t_recv_minus);
+    }
+
+    
 #endif
     
   };
