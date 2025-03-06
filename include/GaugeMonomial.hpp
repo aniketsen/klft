@@ -25,7 +25,7 @@ namespace klft {
     }
 
     void derivative(AdjointField<T,Adjoint,Ndim,Nc> deriv, HamiltonianField<T,Group,Adjoint,Ndim,Nc> h) override {
-      auto BulkPolicy = Kokkos::MDRangePolicy<Kokkos::Rank<5>>({0,0,0,0,0},{h.gauge_field.get_max_dim(0),h.gauge_field.get_max_dim(1),h.gauge_field.get_max_dim(2),h.gauge_field.get_max_dim(3),h.gauge_field.get_Ndim()});
+      auto BulkPolicy = Kokkos::MDRangePolicy<Kokkos::Rank<5>>({h.gauge_field.get_start_dim(0),h.gauge_field.get_start_dim(1),h.gauge_field.get_start_dim(2),h.gauge_field.get_start_dim(3),0},{h.gauge_field.get_end_dim(0),h.gauge_field.get_end_dim(1),h.gauge_field.get_end_dim(2),h.gauge_field.get_end_dim(3),h.gauge_field.get_Ndim()});
       Kokkos::parallel_for("derivative", BulkPolicy, KOKKOS_CLASS_LAMBDA(const int &x, const int &y, const int &z, const int &t, const int &mu) {
         Group S = h.gauge_field.get_staple(x,y,z,t,mu);
         S = h.gauge_field.get_link(x,y,z,t,mu)*S;

@@ -71,6 +71,10 @@ int main(int argc, char **argv) {
       return 0;
     }
   }
+#ifdef KLFT_USE_MPI
+  std::cerr << "This is not built for MPI" << std::endl;
+  return 1;
+#else
   if(gauge_group == "SU2" && ndim == 4) klft::HMC_SU2_4D<real_t>(LX,LY,LZ,LT,n_traj,n_steps,tau,beta,seed,outfilename);
   if(gauge_group == "SU2" && ndim == 3) klft::HMC_SU2_3D<real_t>(LX,LY,LT,n_traj,n_steps,tau,beta,seed,outfilename);
   if(gauge_group == "SU2" && ndim == 2) klft::HMC_SU2_2D<real_t>(LX,LT,n_traj,n_steps,tau,beta,seed,outfilename);
@@ -78,4 +82,5 @@ int main(int argc, char **argv) {
   if(gauge_group == "U1" && ndim == 3) klft::HMC_U1_3D<real_t>(LX,LY,LT,n_traj,n_steps,tau,beta,seed,outfilename);
   if(gauge_group == "U1" && ndim == 2) klft::HMC_U1_2D<real_t>(LX,LT,n_traj,n_steps,tau,beta,seed,outfilename);
   return 0;
+#endif
 }

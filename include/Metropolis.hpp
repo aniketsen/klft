@@ -77,17 +77,30 @@ namespace klft {
 
       void initGauge(const bool cold_start) {
         if(cold_start) {
-          auto BulkPolicy = Kokkos::MDRangePolicy<initGauge_cold_s,Kokkos::Rank<5>>({0,0,0,0,0},{gauge_field.get_max_dim(0),gauge_field.get_max_dim(1),gauge_field.get_max_dim(2),gauge_field.get_max_dim(3),gauge_field.get_Ndim()});
+          auto BulkPolicy = Kokkos::MDRangePolicy<initGauge_cold_s,Kokkos::Rank<5>>({gauge_field.get_start_dim(0),gauge_field.get_start_dim(1),gauge_field.get_start_dim(2),gauge_field.get_start_dim(3),0},{gauge_field.get_end_dim(0),gauge_field.get_end_dim(1),gauge_field.get_end_dim(2),gauge_field.get_end_dim(3),gauge_field.get_Ndim()});
           Kokkos::parallel_for("initGauge_cold", BulkPolicy, *this);
         } else {
-          auto BulkPolicy = Kokkos::MDRangePolicy<initGauge_hot_s,Kokkos::Rank<5>>({0,0,0,0,0},{gauge_field.get_max_dim(0),gauge_field.get_max_dim(1),gauge_field.get_max_dim(2),gauge_field.get_max_dim(3),gauge_field.get_Ndim()});
+          auto BulkPolicy = Kokkos::MDRangePolicy<initGauge_hot_s,Kokkos::Rank<5>>({gauge_field.get_start_dim(0),gauge_field.get_start_dim(1),gauge_field.get_start_dim(2),gauge_field.get_start_dim(3),0},{gauge_field.get_end_dim(0),gauge_field.get_end_dim(1),gauge_field.get_end_dim(2),gauge_field.get_end_dim(3),gauge_field.get_Ndim()});
           Kokkos::parallel_for("initGauge_hot", BulkPolicy, *this);
         }
       }
 
       T sweep() {
-        auto BulkPolicy_odd = Kokkos::MDRangePolicy<sweep_s<1>,Kokkos::Rank<5>>({0,0,0,0,0},{gauge_field.get_max_dim(0),gauge_field.get_max_dim(1),gauge_field.get_max_dim(2),(int)(gauge_field.get_max_dim(3)/2),gauge_field.get_Ndim()});
-        auto BulkPolicy_even = Kokkos::MDRangePolicy<sweep_s<0>,Kokkos::Rank<5>>({0,0,0,0,0},{gauge_field.get_max_dim(0),gauge_field.get_max_dim(1),gauge_field.get_max_dim(2),(int)(gauge_field.get_max_dim(3)/2),gauge_field.get_Ndim()});
+        int t_start_odd, t_start_even, t_end_odd, t_end_even;
+        t_start_odd = gauge_field.get_start_dim(3);
+        t_start_even = gauge_field.get_start_dim(3);
+        t_end_odd = (int)(gauge_field.get_end_dim(3)/2);
+        t_end_even = (int)(gauge_field.get_end_dim(3)/2);
+#ifdef KLFT_USE_MPI
+        if(gauge_field.comm_dims[3]) {
+          t_start_odd = 0;
+          t_start_even = 1;
+          t_end_odd = (int)(gauge_field.get_end_dim(3)/2);
+          t_end_even = (int)(gauge_field.get_end_dim(3)/2) + 1;
+        }
+#endif
+        auto BulkPolicy_odd = Kokkos::MDRangePolicy<sweep_s<1>,Kokkos::Rank<5>>({gauge_field.get_start_dim(0),gauge_field.get_start_dim(1),gauge_field.get_start_dim(2),t_start_odd,0},{gauge_field.get_end_dim(0),gauge_field.get_end_dim(1),gauge_field.get_end_dim(2),t_end_odd,gauge_field.get_Ndim()});
+        auto BulkPolicy_even = Kokkos::MDRangePolicy<sweep_s<0>,Kokkos::Rank<5>>({gauge_field.get_start_dim(0),gauge_field.get_start_dim(1),gauge_field.get_start_dim(2),t_start_even,0},{gauge_field.get_end_dim(0),gauge_field.get_end_dim(1),gauge_field.get_end_dim(2),t_end_even,gauge_field.get_Ndim()});
         T accept = 0.0;
         T accept_rate = 0.0;
         Kokkos::parallel_reduce("sweep_even", BulkPolicy_even, *this, accept);

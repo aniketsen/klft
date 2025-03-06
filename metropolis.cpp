@@ -76,6 +76,10 @@ int main(int argc, char **argv) {
       return 0;
     }
   }
+#ifdef KLFT_USE_MPI
+  std::cerr << "This is not built for MPI" << std::endl;
+  return 1;
+#else
   if(gauge_group == "SU2" && ndim == 4) klft::Metropolis_SU2_4D<real_t>(LX,LY,LZ,LT,n_hit,beta,delta,seed,n_sweep,cold_start,outfilename);
   if(gauge_group == "SU2" && ndim == 3) klft::Metropolis_SU2_3D<real_t>(LX,LY,LT,n_hit,beta,delta,seed,n_sweep,cold_start,outfilename);
   if(gauge_group == "SU2" && ndim == 2) klft::Metropolis_SU2_2D<real_t>(LX,LT,n_hit,beta,delta,seed,n_sweep,cold_start,outfilename);
@@ -86,4 +90,5 @@ int main(int argc, char **argv) {
   if(gauge_group == "SU3" && ndim == 3) klft::Metropolis_SU3_3D<real_t>(LX,LY,LT,n_hit,beta,delta,seed,n_sweep,cold_start,outfilename);
   if(gauge_group == "SU3" && ndim == 2) klft::Metropolis_SU3_2D<real_t>(LX,LT,n_hit,beta,delta,seed,n_sweep,cold_start,outfilename);
   return 0;
+#endif
 }

@@ -47,7 +47,7 @@ namespace klft {
 
     bool hmc_step() {
       hamiltonian_field.randomize_momentum(rng);
-      GaugeField<T,Group,Ndim,Nc> gauge_old(hamiltonian_field.gauge_field.dims);
+      GaugeField<T,Group,Ndim,Nc> gauge_old(hamiltonian_field.gauge_field.local_dims);
       gauge_old.copy(hamiltonian_field.gauge_field);
       for(int i = 0; i < monomials.size(); ++i) {
         monomials[i]->heatbath(hamiltonian_field);

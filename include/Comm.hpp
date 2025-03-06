@@ -19,6 +19,20 @@ namespace klft {
     return MPI_COMPLEX;
   }
 
+  template <class ViewType,
+            std::enable_if_t<std::is_same<typename ViewType::value_type,
+            float>::value, bool> = true>
+  MPI_Datatype get_mpi_datatype(ViewType) {
+    return MPI_FLOAT;
+  }
+
+  template <class ViewType,
+            std::enable_if_t<std::is_same<typename ViewType::value_type,
+            double>::value, bool> = true>
+  MPI_Datatype get_mpi_datatype(ViewType) {
+    return MPI_DOUBLE;
+  }
+
   template <int Ndim = 4>
   class Comm {
   public:

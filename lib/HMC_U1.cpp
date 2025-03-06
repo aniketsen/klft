@@ -38,9 +38,9 @@ namespace klft {
       RNG rng = RNG(seed);
       std::mt19937 mt(seed);
       std::uniform_real_distribution<T> dist(0.0,1.0);
-      GaugeFieldType gauge_field = GaugeFieldType(LX,LY,LZ,LT);
+      GaugeFieldType gauge_field = GaugeFieldType({LX,LY,LZ,LT});
       gauge_field.set_random(0.5,RNG(seed*2));
-      AdjointFieldType adjoint_field = AdjointFieldType(LX,LY,LZ,LT);
+      AdjointFieldType adjoint_field = AdjointFieldType({LX,LY,LZ,LT});
       HamiltonianFieldType hamiltonian_field = HamiltonianFieldType(gauge_field,adjoint_field);
       HMC_Params params(n_steps,tau);
       HMC<T,Group,Adjoint,RNG,4,1> hmc(params,rng,dist,mt);
@@ -106,9 +106,9 @@ namespace klft {
       RNG rng = RNG(seed);
       std::mt19937 mt(seed);
       std::uniform_real_distribution<T> dist(0.0,1.0);
-      GaugeFieldType gauge_field = GaugeFieldType(LX,LY,LT);
+      GaugeFieldType gauge_field = GaugeFieldType({LX,LY,LT});
       gauge_field.set_random(0.5,RNG(seed*2));
-      AdjointFieldType adjoint_field = AdjointFieldType(LX,LY,LT);
+      AdjointFieldType adjoint_field = AdjointFieldType({LX,LY,LT});
       HamiltonianFieldType hamiltonian_field = HamiltonianFieldType(gauge_field,adjoint_field);
       HMC_Params params(n_steps,tau);
       HMC<T,Group,Adjoint,RNG,3,1> hmc(params,rng,dist,mt);
@@ -173,9 +173,9 @@ namespace klft {
       RNG rng = RNG(seed);
       std::mt19937 mt(seed);
       std::uniform_real_distribution<T> dist(0.0,1.0);
-      GaugeFieldType gauge_field = GaugeFieldType(LX,LT);
+      GaugeFieldType gauge_field = GaugeFieldType({LX,LT});
       gauge_field.set_random(0.5,RNG(seed*2));
-      AdjointFieldType adjoint_field = AdjointFieldType(LX,LT);
+      AdjointFieldType adjoint_field = AdjointFieldType({LX,LT});
       HamiltonianFieldType hamiltonian_field = HamiltonianFieldType(gauge_field,adjoint_field);
       HMC_Params params(n_steps,tau);
       HMC<T,Group,Adjoint,RNG,2,1> hmc(params,rng,dist,mt);

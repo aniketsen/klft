@@ -24,7 +24,7 @@ namespace klft {
   public:
     Leapfrog() : Integrator<T,Group,Adjoint,Ndim,Nc>::Integrator() {}
     void integrate(std::vector<std::unique_ptr<Monomial<T,Group,Adjoint,Ndim,Nc>>> &monomials, HamiltonianField<T,Group,Adjoint,Ndim,Nc> h, HMC_Params params) override {
-      AdjointField<T,Adjoint,Ndim,Nc> deriv(h.gauge_field.dims);
+      AdjointField<T,Adjoint,Ndim,Nc> deriv(h.gauge_field.local_dims);
       T dtau = params.get_tau()/T(params.get_n_steps());
       // initial half step
       deriv.set_zero();
