@@ -10,6 +10,8 @@ make
 ## Usage
 
 ### Metropolis
+
+#### without MPI
 ```bash
 Usage: ./metropolis [options]
 Options:
@@ -19,6 +21,21 @@ Options:
 --LY lattice size in y direction
 --LZ lattice size in z direction
 --LT lattice size in t direction
+--n-hit number of hits per sweep
+--beta inverse coupling constant
+--delta step size
+--seed random number generator seed
+--n-sweep number of sweeps
+--cold-start true or false
+--outfilename output filename
+```
+
+#### with MPI
+```bash
+Usage: ./metropolis-[U1/SU2] [options]
+Options:
+--dims dimensions of the lattice
+--mpi-dims dimensions of the MPI grid
 --n-hit number of hits per sweep
 --beta inverse coupling constant
 --delta step size
