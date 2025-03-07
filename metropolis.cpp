@@ -6,10 +6,10 @@ using real_t = double;
 int main(int argc, char **argv) {
   std::string gauge_group = "SU2";
   int ndim = 4;
-  size_t LX = 8;
-  size_t LY = 8;
-  size_t LZ = 8;
-  size_t LT = 16;
+  int LX = 8;
+  int LY = 8;
+  int LZ = 8;
+  int LT = 16;
   size_t n_hit = 100;
   real_t beta = 2.0;
   real_t delta = 0.05;

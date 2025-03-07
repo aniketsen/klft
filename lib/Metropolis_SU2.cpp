@@ -6,7 +6,7 @@
 namespace klft {
 
   template <typename T>
-  void Metropolis_SU2_4D(const size_t &LX, const size_t &LY, const size_t &LZ, const size_t &LT, 
+  void Metropolis_SU2_4D(const int &LX, const int &LY, const int &LZ, const int &LT, 
                          const size_t &n_hit, const T &beta, const T &delta,
                          const size_t &seed, const size_t &n_sweep, const bool cold_start,
                          const std::string &outfilename) {
@@ -61,7 +61,7 @@ namespace klft {
   }
 
   template <typename T>
-  void Metropolis_SU2_3D(const size_t &LX, const size_t &LY, const size_t &LT, 
+  void Metropolis_SU2_3D(const int &LX, const int &LY, const int &LT, 
                          const size_t &n_hit, const T &beta, const T &delta,
                          const size_t &seed, const size_t &n_sweep, const bool cold_start,
                          const std::string &outfilename) {
@@ -115,7 +115,7 @@ namespace klft {
   }
 
   template <typename T>
-  void Metropolis_SU2_2D(const size_t &LX, const size_t &LT, 
+  void Metropolis_SU2_2D(const int &LX, const int &LT, 
                          const size_t &n_hit, const T &beta, const T &delta,
                          const size_t &seed, const size_t &n_sweep, const bool cold_start,
                          const std::string &outfilename) {
@@ -167,32 +167,32 @@ namespace klft {
     outfile.close();
   }
 
-  template void Metropolis_SU2_4D<float>(const size_t &LX, const size_t &LY, const size_t &LZ, const size_t &LT, 
+  template void Metropolis_SU2_4D<float>(const int &LX, const int &LY, const int &LZ, const int &LT, 
                                    const size_t &n_hit, const float &beta, const float &delta,
                                    const size_t &seed, const size_t &n_sweep, const bool cold_start,
                                    const std::string &outfilename);
 
-  template void Metropolis_SU2_4D<double>(const size_t &LX, const size_t &LY, const size_t &LZ, const size_t &LT, 
+  template void Metropolis_SU2_4D<double>(const int &LX, const int &LY, const int &LZ, const int &LT, 
                                    const size_t &n_hit, const double &beta, const double &delta,
                                    const size_t &seed, const size_t &n_sweep, const bool cold_start,
                                    const std::string &outfilename);
 
-  template void Metropolis_SU2_3D<float>(const size_t &LX, const size_t &LY, const size_t &LT, 
+  template void Metropolis_SU2_3D<float>(const int &LX, const int &LY, const int &LT, 
                                    const size_t &n_hit, const float &beta, const float &delta,
                                    const size_t &seed, const size_t &n_sweep, const bool cold_start,
                                    const std::string &outfilename);
 
-  template void Metropolis_SU2_3D<double>(const size_t &LX, const size_t &LY, const size_t &LT,
+  template void Metropolis_SU2_3D<double>(const int &LX, const int &LY, const int &LT,
                                    const size_t &n_hit, const double &beta, const double &delta,
                                    const size_t &seed, const size_t &n_sweep, const bool cold_start,
                                    const std::string &outfilename);    
 
-  template void Metropolis_SU2_2D<float>(const size_t &LX, const size_t &LT,
+  template void Metropolis_SU2_2D<float>(const int &LX, const int &LT,
                                    const size_t &n_hit, const float &beta, const float &delta,
                                    const size_t &seed, const size_t &n_sweep, const bool cold_start,
                                    const std::string &outfilename);
 
-  template void Metropolis_SU2_2D<double>(const size_t &LX, const size_t &LT,
+  template void Metropolis_SU2_2D<double>(const int &LX, const int &LT,
                                    const size_t &n_hit, const double &beta, const double &delta,
                                    const size_t &seed, const size_t &n_sweep, const bool cold_start,
                                    const std::string &outfilename);                                                                                                                                                                    

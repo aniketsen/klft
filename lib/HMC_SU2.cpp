@@ -6,7 +6,7 @@
 namespace klft {
 
   template <typename T>
-  void HMC_SU2_4D(const size_t &LX, const size_t &LY, const size_t &LZ, const size_t &LT,
+  void HMC_SU2_4D(const int &LX, const int &LY, const int &LZ, const int &LT,
                  const size_t &n_traj, const size_t &n_steps, const T &tau, const T &beta,
                  const size_t &seed, const std::string &outfilename) {
     std::cout << "Running HMC_SU2_4D" << std::endl;
@@ -75,7 +75,7 @@ namespace klft {
   }
 
   template <typename T>
-  void HMC_SU2_3D(const size_t &LX, const size_t &LY, const size_t &LT,
+  void HMC_SU2_3D(const int &LX, const int &LY, const int &LT,
                  const size_t &n_traj, const size_t &n_steps, const T &tau, const T &beta,
                  const size_t &seed, const std::string &outfilename) {
     std::cout << "Running HMC_SU2_3D" << std::endl;
@@ -143,7 +143,7 @@ namespace klft {
   }
 
   template <typename T>
-  void HMC_SU2_2D(const size_t &LX, const size_t &LT,
+  void HMC_SU2_2D(const int &LX, const int &LT,
                  const size_t &n_traj, const size_t &n_steps, const T &tau, const T &beta,
                  const size_t &seed, const std::string &outfilename) {
     std::cout << "Running HMC_SU2_2D" << std::endl;
@@ -209,27 +209,27 @@ namespace klft {
     outfile.close();
   }
 
-  template void HMC_SU2_4D<float>(const size_t &LX, const size_t &LY, const size_t &LZ, const size_t &LT,
+  template void HMC_SU2_4D<float>(const int &LX, const int &LY, const int &LZ, const int &LT,
                                   const size_t &n_traj, const size_t &n_steps, const float &tau, const float &beta,
                                   const size_t &seed, const std::string &outfilename);
 
-  template void HMC_SU2_4D<double>(const size_t &LX, const size_t &LY, const size_t &LZ, const size_t &LT,
+  template void HMC_SU2_4D<double>(const int &LX, const int &LY, const int &LZ, const int &LT,
                                    const size_t &n_traj, const size_t &n_steps, const double &tau, const double &beta,
                                    const size_t &seed, const std::string &outfilename);
 
-  template void HMC_SU2_3D<float>(const size_t &LX, const size_t &LY, const size_t &LT,
+  template void HMC_SU2_3D<float>(const int &LX, const int &LY, const int &LT,
                                  const size_t &n_traj, const size_t &n_steps, const float &tau, const float &beta,
                                  const size_t &seed, const std::string &outfilename);
 
-  template void HMC_SU2_3D<double>(const size_t &LX, const size_t &LY, const size_t &LT,
+  template void HMC_SU2_3D<double>(const int &LX, const int &LY, const int &LT,
                                   const size_t &n_traj, const size_t &n_steps, const double &tau, const double &beta,
                                   const size_t &seed, const std::string &outfilename);
 
-  template void HMC_SU2_2D<float>(const size_t &LX, const size_t &LT,
+  template void HMC_SU2_2D<float>(const int &LX, const int &LT,
                                  const size_t &n_traj, const size_t &n_steps, const float &tau, const float &beta,
                                  const size_t &seed, const std::string &outfilename);
 
-  template void HMC_SU2_2D<double>(const size_t &LX, const size_t &LT,
+  template void HMC_SU2_2D<double>(const int &LX, const int &LT,
                                   const size_t &n_traj, const size_t &n_steps, const double &tau, const double &beta,
                                   const size_t &seed, const std::string &outfilename);                                                                                                                                        
 
