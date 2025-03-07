@@ -32,7 +32,15 @@ namespace klft {
     void update_gauge(const T dtau) {
       auto BulkPolicy = Kokkos::MDRangePolicy<Kokkos::Rank<5>>({gauge_field.get_start_dim(0),gauge_field.get_start_dim(1),gauge_field.get_start_dim(2),gauge_field.get_start_dim(3),0},{gauge_field.get_end_dim(0),gauge_field.get_end_dim(1),gauge_field.get_end_dim(2),gauge_field.get_end_dim(3),gauge_field.get_Ndim()});
       Kokkos::parallel_for("update_gauge", BulkPolicy, KOKKOS_CLASS_LAMBDA(const int x, const int y, const int z, const int t, const int mu) {
-        Group U = exp(dtau*adjoint_field.get_adjoint(x,y,z,t,mu))*gauge_field.get_link(x,y,z,t,mu);
+        Kokkos::Array<int,4> site = {x,y,z,t};
+#ifdef KLFT_USE_MPI
+        for(int i = 0; i < Ndim; i++) {
+          if(gauge_field.comm_dims[i]) {
+            site[i] -= 1;
+          }
+        }
+#endif
+        Group U = exp(dtau*adjoint_field.get_adjoint(site,mu))*gauge_field.get_link(x,y,z,t,mu);
         gauge_field.set_link(x,y,z,t,mu,U);
       });
     }
@@ -44,6 +52,11 @@ namespace klft {
         Adjoint tmp = adjoint_field.get_adjoint(x,y,z,t,mu);
         local_sum += 0.5*tmp.norm2();
       }, kinetic_energy);
+#ifdef KLFT_USE_MPI
+      T global_kinetic_energy;
+      MPI_Allreduce(&kinetic_energy,&global_kinetic_energy,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+      return global_kinetic_energy;
+#endif
       return kinetic_energy;
     }
 

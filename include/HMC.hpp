@@ -4,6 +4,9 @@
 #include "HamiltonianField.hpp"
 #include "Integrator.hpp"
 #include <random>
+#ifdef KLFT_USE_MPI
+#include "Comm.hpp"
+#endif
 
 namespace klft {
 
@@ -45,25 +48,59 @@ namespace klft {
       }
     }
 
-    bool hmc_step() {
+    bool hmc_step(
+#ifdef KLFT_USE_MPI
+      Comm<Ndim> &comm
+#endif
+    ) {
       hamiltonian_field.randomize_momentum(rng);
+#ifdef KLFT_USE_MPI
+      GaugeField<T,Group,Ndim,Nc> gauge_old(hamiltonian_field.gauge_field.global_dims,
+                                            hamiltonian_field.gauge_field.local_dims,
+                                            hamiltonian_field.gauge_field.comm_dims,
+                                            hamiltonian_field.gauge_field.prev_rank,
+                                            hamiltonian_field.gauge_field.next_rank);
+#else
       GaugeField<T,Group,Ndim,Nc> gauge_old(hamiltonian_field.gauge_field.local_dims);
+#endif
       gauge_old.copy(hamiltonian_field.gauge_field);
       for(int i = 0; i < monomials.size(); ++i) {
         monomials[i]->heatbath(hamiltonian_field);
       }
-      integrator->integrate(monomials, hamiltonian_field, params);
-      T delta_H = 0.0;
+      integrator->integrate(monomials, hamiltonian_field, params
+#ifdef KLFT_USE_MPI
+        , comm
+#endif
+      );
+// #ifdef KLFT_USE_MPI
+//       hamiltonian_field.gauge_field.update_halo_plus(comm);
+//       Kokkos::fence();
+//       hamiltonian_field.gauge_field.update_halo_minus(comm);
+//       Kokkos::fence();
+// #endif
+      double delta_H = 0.0;
       for(int i = 0; i < monomials.size(); ++i) {
         monomials[i]->accept(hamiltonian_field);
         delta_H += monomials[i]->get_delta_H();
       }
+// #ifdef KLFT_USE_MPI
+//       double global_delta_H;
+//       MPI_Allreduce(&delta_H,&global_delta_H,1,MPI_DOUBLE,MPI_SUM,comm);
+//       delta_H = global_delta_H;
+// #endif
       bool accept = true;
+#ifdef KLFT_USE_MPI
+      if(comm.rank == 0) {
+#endif 
       if(delta_H > 0.0) {
         if(dist(mt) > Kokkos::exp(-delta_H)) {
           accept = false;
         }
       }
+#ifdef KLFT_USE_MPI
+      }
+      MPI_Bcast(&accept,1,MPI_CXX_BOOL,0,comm);
+#endif
       if(!accept) {
         hamiltonian_field.gauge_field.copy(gauge_old);
       }

@@ -258,6 +258,11 @@ namespace klft {
       T plaq = 0.0;
       Kokkos::parallel_reduce("plaquette", BulkPolicy, *this, plaq);
       if(Normalize) plaq /= get_volume()*((Ndim-1)*Ndim/2)*Nc;
+#ifdef KLFT_USE_MPI
+      T plaq_global;
+      MPI_Allreduce(&plaq,&plaq_global,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+      return plaq_global;
+#endif
       return plaq;
     }
 

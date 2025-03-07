@@ -130,11 +130,11 @@ int main(int argc, char **argv) {
   Kokkos::fence();
   metropolis.gauge_field.update_halo_minus(comm);
   Kokkos::fence();
-  real_t lplaq = gauge_field.get_plaquette();
-  real_t gplaq;
-  MPI_Allreduce(&lplaq, &gplaq, 1, MPI_DOUBLE, MPI_SUM, comm);
+  real_t plaq = gauge_field.get_plaquette();
+  // real_t gplaq;
+  // MPI_Allreduce(&lplaq, &gplaq, 1, MPI_DOUBLE, MPI_SUM, comm);
   if(rank == 0) {
-    std::cout << "Starting Plaquette: " << gplaq << std::endl;
+    std::cout << "Starting Plaquette: " << plaq << std::endl;
     std::cout << "Starting Metropolis: " << std::endl;
   }
   auto metropolis_start_time = std::chrono::high_resolution_clock::now();
@@ -148,10 +148,10 @@ int main(int argc, char **argv) {
     Kokkos::fence();
     metropolis.gauge_field.update_halo_minus(comm);
     Kokkos::fence();
-    real_t plaquette_local = gauge_field.get_plaquette();
+    real_t plaquette = gauge_field.get_plaquette();
     Kokkos::fence();
-    real_t plaquette;
-    MPI_Allreduce(&plaquette_local, &plaquette, 1, MPI_DOUBLE, MPI_SUM, comm);
+    // real_t plaquette;
+    // MPI_Allreduce(&plaquette_local, &plaquette, 1, MPI_DOUBLE, MPI_SUM, comm);
     auto end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> sweep_time = end_time - start_time;
     if(rank == 0) {
