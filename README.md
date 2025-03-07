@@ -46,6 +46,8 @@ Options:
 ```
 
 ### HMC
+
+#### without MPI
 ```bash
 Usage: ./hmc [options]
 Options:
@@ -61,4 +63,18 @@ Options:
 --beta inverse coupling constant
 --seed random number generator seed
 --outfilename output filename
+```
+
+#### with MPI
+```bash
+Usage: ./hmc-[U1/SU2] [options]
+Options:
+--dims dimensions of the lattice
+--mpi-dims dimensions of the MPI grid
+--n-traj number of trajectories
+--n-steps number of steps per trajectory
+--tau step size
+--beta coupling
+--seed random seed
+--outfilename output file name
 ```
