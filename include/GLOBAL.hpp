@@ -50,6 +50,8 @@ template <size_t Nc>
 using SUN = Kokkos::Array<Kokkos::Array<complex_t, Nc>, Nc>;
 
 // define Spinor Type
+// info correct dispatch is only guaranteed for    Nd != Nc ! -> Conflicts with
+// SUN.hpp version Maybe via class to make it safe
 template <size_t Nc, size_t Nd>
 using Spinor = Kokkos::Array<Kokkos::Array<complex_t, Nd>, Nc>;
 
