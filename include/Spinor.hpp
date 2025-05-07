@@ -24,7 +24,8 @@
 
 namespace klft {
 template <size_t Nc, size_t Nd>
-Spinor<Nc, Nd> operator*(const SUN<Nc> &U, const Spinor<Nc, Nd> &spinor) {
+KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator*(
+    const SUN<Nc> &U, const Spinor<Nc, Nd> &spinor) {
   Spinor<Nc, Nd> res;
 #pragma unroll
   for (size_t i = 0; i < Nc; i++) {
@@ -41,8 +42,8 @@ Spinor<Nc, Nd> operator*(const SUN<Nc> &U, const Spinor<Nc, Nd> &spinor) {
 // *= makes no sence f spinor gauge link
 
 template <size_t Nc, size_t Nd>
-Spinor<Nc, Nd> operator*(const complex_t &scalar,
-                         const Spinor<Nc, Nd> &spinor) {
+KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator*(
+    const complex_t &scalar, const Spinor<Nc, Nd> &spinor) {
   Spinor<Nc, Nd> res;
 #pragma unroll
   for (size_t i = 0; i < Nc; i++) {
@@ -53,15 +54,16 @@ Spinor<Nc, Nd> operator*(const complex_t &scalar,
   }
 }
 template <size_t Nc, size_t Nd>
-Spinor<Nc, Nd> operator*=(const Spinor<Nc, Nd> &spinor,
-                          const complex_t &scalar) {
+KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator*=(
+    const Spinor<Nc, Nd> &spinor, const complex_t &scalar) {
   Spinor<Nc, Nd> res = scalar * spinor;
   spinor = res;
   return spinor;
 }
 
 template <size_t Nc, size_t Nd>
-Spinor<Nc, Nd> operator*(const real_t &scalar, const Spinor<Nc, Nd> &spinor) {
+KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator*(
+    const real_t &scalar, const Spinor<Nc, Nd> &spinor) {
   Spinor<Nc, Nd> res;
 #pragma unroll
   for (size_t i = 0; i < Nc; i++) {
@@ -72,15 +74,16 @@ Spinor<Nc, Nd> operator*(const real_t &scalar, const Spinor<Nc, Nd> &spinor) {
   }
 }
 template <size_t Nc, size_t Nd>
-Spinor<Nc, Nd> operator*=(const Spinor<Nc, Nd> &spinor, const real_t &scalar) {
+KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator*=(
+    const Spinor<Nc, Nd> &spinor, const real_t &scalar) {
   Spinor<Nc, Nd> res = scalar * spinor;
   spinor = res;
   return spinor;
 }
 
 template <size_t Nc, size_t Nd>
-Spinor<Nc, Nd> operator+(const Spinor<Nc, Nd> &spinor1,
-                         const Spinor<Nc, Nd> &spinor2) {
+KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator+(
+    const Spinor<Nc, Nd> &spinor1, const Spinor<Nc, Nd> &spinor2) {
   Spinor<Nc, Nd> res;
 #pragma unroll
   for (size_t i = 0; i < Nc; i++) {
@@ -91,16 +94,16 @@ Spinor<Nc, Nd> operator+(const Spinor<Nc, Nd> &spinor1,
   }
 }
 template <size_t Nc, size_t Nd>
-Spinor<Nc, Nd> operator+=(const Spinor<Nc, Nd> &spinor1,
-                          const Spinor<Nc, Nd> &spinor2) {
+KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator+=(
+    const Spinor<Nc, Nd> &spinor1, const Spinor<Nc, Nd> &spinor2) {
   Spinor<Nc, Nd> res = spinor1 + spinor2;
   spinor1 = res;
   return spinor1;
 }
 
 template <size_t Nc, size_t Nd>
-Spinor<Nc, Nd> operator-(const Spinor<Nc, Nd> &spinor1,
-                         const Spinor<Nc, Nd> &spinor2) {
+KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator-(
+    const Spinor<Nc, Nd> &spinor1, const Spinor<Nc, Nd> &spinor2) {
   Spinor<Nc, Nd> res;
 #pragma unroll
   for (size_t i = 0; i < Nc; i++) {
@@ -111,14 +114,14 @@ Spinor<Nc, Nd> operator-(const Spinor<Nc, Nd> &spinor1,
   }
 }
 template <size_t Nc, size_t Nd>
-Spinor<Nc, Nd> operator-=(const Spinor<Nc, Nd> &spinor1,
-                          const Spinor<Nc, Nd> &spinor2) {
+KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator-=(
+    const Spinor<Nc, Nd> &spinor1, const Spinor<Nc, Nd> &spinor2) {
   Spinor<Nc, Nd> res = spinor1 - spinor2;
   spinor1 = res;
   return spinor1;
 }
 template <size_t Nc, size_t Nd>
-real_t sqrnorm(const Spinor<Nc, Nd> &spinor) {
+KOKKOS_FORCEINLINE_FUNCTION real_t sqrnorm(const Spinor<Nc, Nd> &spinor) {
   real_t res = 0;
 #pragma unroll
   for (size_t i = 0; i < Nc; i++) {
