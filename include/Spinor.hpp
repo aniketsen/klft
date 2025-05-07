@@ -139,6 +139,8 @@ KOKKOS_FORCEINLINE_FUNCTION real_t sqnorm(const Spinor<Nc, Nd> &spinor) {
 
 // Define Gamma Spinor interaction
 // Dirac index and gamma matrix have to have the same dimension
+
+// This is ineficnet because of the sparsity of the gamma matrices
 template <size_t Nc, size_t Nd>
 KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator*(
     const GammaMat<Nd> &matrix, const Spinor<Nc, Nd> &spinor) {
