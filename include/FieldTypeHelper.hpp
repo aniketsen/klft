@@ -57,7 +57,7 @@ struct DeviceSpinorFieldType;
 
 template <size_t Nc>
 struct DeviceSpinorFieldType<4, Nc, 4> {
-  using type = deviceSpinorField<4, Nc, 4>;
+  using type = deviceSpinorField<Nc, 4>;
 };
 
 // now do the same for the PTBC gauge field types
