@@ -21,6 +21,7 @@
 
 #pragma once
 #include "GLOBAL.hpp"
+#include "GammaMatrix.hpp"
 
 namespace klft {
 template <size_t Nc, size_t Nd>
@@ -134,6 +135,25 @@ KOKKOS_FORCEINLINE_FUNCTION real_t sqnorm(const Spinor<Nc, Nd> &spinor) {
     }
   }
   return res;
+}
+
+// Define Gamma Spinor interaction
+// Dirac index and gamma matrix have to have the same dimension
+template <size_t Nc, size_t Nd>
+KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator*(
+    const GammaMat<Nd> &matrix, const Spinor<Nc, Nd> &spinor) {
+  Spinor<nc, Nd> c;
+#pragma unroll
+  for (size_t i = 0; i < Nc; i++) {
+#pragma unroll
+    for (size_t j = 0; j < Nd; j++) {
+#pragma unroll
+      for (size_t k = 0; k < Nd; k++) {
+        c[i][j] += matrix(j, k) * spinor[i][k];
+      }
+    }
+  }
+  return c;
 }
 
 }  // namespace klft
