@@ -33,7 +33,7 @@ KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator*(
     for (size_t j = 0; j < Nc; j++) {
 #pragma unroll
       for (size_t k = 0; k < Nd; k++) {
-        res[i][k] += U[i][j] * spinor[j][k]
+        res[i][k] += U[i][j] * spinor[j][k];
       }
     }
   }
@@ -49,7 +49,7 @@ KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator*(
   for (size_t i = 0; i < Nc; i++) {
 #pragma unroll
     for (size_t j = 0; j < Nd; j++) {
-      res[i, j] *= scalar
+      res[i, j] *= scalar;
     }
   }
 }
@@ -69,7 +69,7 @@ KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator*(
   for (size_t i = 0; i < Nc; i++) {
 #pragma unroll
     for (size_t j = 0; j < Nd; j++) {
-      res[i, j] *= scalar
+      res[i, j] *= scalar;
     }
   }
 }
@@ -89,9 +89,10 @@ KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator+(
   for (size_t i = 0; i < Nc; i++) {
 #pragma unroll
     for (size_t j = 0; j < Nd; j++) {
-      res[i, j] += scalar
+      res[i, j] += scalar;
     }
   }
+  return res;
 }
 template <size_t Nc, size_t Nd>
 KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator+=(
@@ -109,9 +110,10 @@ KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator-(
   for (size_t i = 0; i < Nc; i++) {
 #pragma unroll
     for (size_t j = 0; j < Nd; j++) {
-      res[i, j] -= scalar
+      res[i, j] -= scalar;
     }
   }
+  return res;
 }
 template <size_t Nc, size_t Nd>
 KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator-=(
@@ -128,9 +130,10 @@ KOKKOS_FORCEINLINE_FUNCTION real_t sqnorm(const Spinor<Nc, Nd> &spinor) {
 #pragma unroll
     for (size_t j = 0; j < Nd; j++) {
       res += spinor[i, j].imag() * spinor[i, j].imag() +
-             spinor[i, j].real() * spinor[i, j].real()
+             spinor[i, j].real() * spinor[i, j].real();
     }
   }
+  return res;
 }
 
 }  // namespace klft
