@@ -63,7 +63,7 @@ using Spinor = Kokkos::Array<Kokkos::Array<complex_t, Nd>, Nc>;
 // shouldn't Nd always be 4?
 // Nc is the number of colors
 template <size_t Nd, size_t RepDim, size_t Nc>
-using SpinorField = Kokkos::View<Spinor<Nc, RepDim>**** [Nd],
+using SpinorField = Kokkos::View<Spinor<Nc, RepDim>****,
                                  Kokkos::MemoryTraits<Kokkos::Restrict>>;
 
 template <size_t Nd, size_t Nc>
@@ -130,7 +130,7 @@ using LinkScalarField2D =
 #if defined(KOKKOS_ENABLE_CUDA)
 template <size_t Nd, size_t RepDim, size_t Nc>
 using constSpinorField =
-    Kokkos::View<const Spinor<Nc, RepDim>**** [Nd],
+    Kokkos::View<const Spinor<Nc, RepDim>****,
                  Kokkos::MemoryTraits<Kokkos::RandomAccess>>;
 
 template <size_t Nd, size_t Nc>
@@ -202,7 +202,7 @@ using constLinkScalarField2D =
 #else
 
 template <size_t Nd, size_t RepDim, size_t Nc>
-using constSpinorField = Kokkos::View<const Spinor<Nc, RepDim>**** [Nd],
+using constSpinorField = Kokkos::View<const Spinor<Nc, RepDim>****,
                                       Kokkos::MemoryTraits<Kokkos::Restrict>>;
 
 template <size_t Nd, size_t Nc>
