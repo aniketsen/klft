@@ -288,6 +288,20 @@ constexpr KOKKOS_FORCEINLINE_FUNCTION SUN<Nc> zeroSUN() {
   }
   return zero;
 }
+// define a global zero generator
+// for spinor
+template <size_t Nc, size_t Nd>
+constexpr KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> zeroSpinor() {
+  Spinor<Nc, Nd> zero;
+#pragma unroll
+  for (size_t i = 0; i < Nc; ++i) {
+#pragma unroll
+    for (size_t j = 0; j < Nd; ++j) {
+      zero[i][j] = complex_t(0.0, 0.0);
+    }
+  }
+  return zero;
+}
 
 // define a global identity field generator
 // for the color x color matrix
@@ -297,6 +311,21 @@ constexpr KOKKOS_FORCEINLINE_FUNCTION SUN<Nc> identitySUN() {
 #pragma unroll
   for (index_t c1 = 0; c1 < Nc; ++c1) {
     id[c1][c1] = complex_t(1.0, 0.0);
+  }
+  return id;
+}
+
+// define a global one generator
+// for spinor
+template <size_t Nc, size_t Nd>
+constexpr KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> oneSpinor() {
+  Spinor<Nc, Nd> id = zeroSpinor<Nc, Nd>();
+#pragma unroll
+  for (size_t i = 0; i < Nc; ++i) {
+#pragma unroll
+    for (size_t j = 0; j < Nd; ++j) {
+      id[i][j] = complex_t(1.0, 0.0);
+    }
   }
   return id;
 }
