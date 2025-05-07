@@ -39,7 +39,7 @@ KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator*(
   }
   return res;
 }
-// *= makes no sence f spinor gauge link
+// *= makes no sense f spinor gauge link
 
 template <size_t Nc, size_t Nd>
 KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator*(
@@ -121,7 +121,7 @@ KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator-=(
   return spinor1;
 }
 template <size_t Nc, size_t Nd>
-KOKKOS_FORCEINLINE_FUNCTION real_t sqrnorm(const Spinor<Nc, Nd> &spinor) {
+KOKKOS_FORCEINLINE_FUNCTION real_t sqnorm(const Spinor<Nc, Nd> &spinor) {
   real_t res = 0;
 #pragma unroll
   for (size_t i = 0; i < Nc; i++) {
