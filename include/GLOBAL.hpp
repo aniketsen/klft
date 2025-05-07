@@ -62,6 +62,10 @@ using Spinor = Kokkos::Array<Kokkos::Array<complex_t, Nd>, Nc>;
 // Nd here is templated, but for a 4D gauge field,
 // shouldn't Nd always be 4?
 // Nc is the number of colors
+template <size_t Nd, size_t RepDim, size_t Nc>
+using SpinorField = Kokkos::View<Spinor<Nc, RepDim>**** [Nd],
+                                 Kokkos::MemoryTraits<Kokkos::Restrict>>;
+
 template <size_t Nd, size_t Nc>
 using GaugeField =
     Kokkos::View<SUN<Nc>**** [Nd], Kokkos::MemoryTraits<Kokkos::Restrict>>;
@@ -124,6 +128,10 @@ using LinkScalarField2D =
 
 // define corresponding constant fields
 #if defined(KOKKOS_ENABLE_CUDA)
+template <size_t Nd, size_t RepDim, size_t Nc>
+using constSpinorField =
+    Kokkos::View<const Spinor<Nc, RepDim>**** [Nd],
+                 Kokkos::MemoryTraits<Kokkos::RandomAccess>>;
 
 template <size_t Nd, size_t Nc>
 using constGaugeField =
@@ -192,6 +200,10 @@ using constLinkScalarField2D =
                  Kokkos::MemoryTraits<Kokkos::RandomAccess>>;
 
 #else
+
+template <size_t Nd, size_t RepDim, size_t Nc>
+using constSpinorField = Kokkos::View<const Spinor<Nc, RepDim>**** [Nd],
+                                      Kokkos::MemoryTraits<Kokkos::Restrict>>;
 
 template <size_t Nd, size_t Nc>
 using constGaugeField = Kokkos::View<const SUN<Nc>**** [Nd],
