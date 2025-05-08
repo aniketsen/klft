@@ -151,10 +151,12 @@ KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator*(
   for (size_t i = 0; i < Nc; i++) {
 #pragma unroll
     for (size_t j = 0; j < Nd; j++) {
+      complex_t val = 0;
 #pragma unroll
       for (size_t k = 0; k < Nd; k++) {
-        c[i][j] = matrix(j, k) * spinor[i][k];
+        val += matrix(j, k) * spinor[i][k];
       }
+      c[i][j] = val;
     }
   }
   return c;
