@@ -53,6 +53,7 @@ KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator*(
       res[i][j] *= scalar;
     }
   }
+  return res;
 }
 template <size_t Nc, size_t Nd>
 KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator*=(
@@ -73,6 +74,7 @@ KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator*(
       res[i][j] *= scalar;
     }
   }
+  return res;
 }
 template <size_t Nc, size_t Nd>
 KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator*=(
