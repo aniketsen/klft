@@ -50,7 +50,7 @@ KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator*(
   for (size_t i = 0; i < Nc; i++) {
 #pragma unroll
     for (size_t j = 0; j < Nd; j++) {
-      res[i, j] *= scalar;
+      res[i][j] *= scalar;
     }
   }
 }
@@ -70,7 +70,7 @@ KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator*(
   for (size_t i = 0; i < Nc; i++) {
 #pragma unroll
     for (size_t j = 0; j < Nd; j++) {
-      res[i, j] *= scalar;
+      res[i][j] *= scalar;
     }
   }
 }
@@ -90,7 +90,7 @@ KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator+(
   for (size_t i = 0; i < Nc; i++) {
 #pragma unroll
     for (size_t j = 0; j < Nd; j++) {
-      res[i, j] += scalar;
+      res[i][j] += spinor2[i][j] + spinor1[i][j];
     }
   }
   return res;
@@ -111,7 +111,7 @@ KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator-(
   for (size_t i = 0; i < Nc; i++) {
 #pragma unroll
     for (size_t j = 0; j < Nd; j++) {
-      res[i, j] -= scalar;
+      res[i][j] -= spinor2[i][j] - spinor1[i][j];
     }
   }
   return res;
@@ -130,8 +130,8 @@ KOKKOS_FORCEINLINE_FUNCTION real_t sqnorm(const Spinor<Nc, Nd> &spinor) {
   for (size_t i = 0; i < Nc; i++) {
 #pragma unroll
     for (size_t j = 0; j < Nd; j++) {
-      res += spinor[i, j].imag() * spinor[i, j].imag() +
-             spinor[i, j].real() * spinor[i, j].real();
+      res += spinor[i][j].imag() * spinor[i][j].imag() +
+             spinor[i][j].real() * spinor[i][j].real();
     }
   }
   return res;
@@ -144,7 +144,7 @@ KOKKOS_FORCEINLINE_FUNCTION real_t sqnorm(const Spinor<Nc, Nd> &spinor) {
 template <size_t Nc, size_t Nd>
 KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator*(
     const GammaMat<Nd> &matrix, const Spinor<Nc, Nd> &spinor) {
-  Spinor<nc, Nd> c;
+  Spinor<Nc, Nd> c;
 #pragma unroll
   for (size_t i = 0; i < Nc; i++) {
 #pragma unroll
