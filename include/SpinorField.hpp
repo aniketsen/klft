@@ -59,8 +59,8 @@ struct deviceSpinorField {
   void do_init(const index_t L0, const index_t L1, const index_t L2,
                const index_t L3, SpinorField<Nc, RepDim> &V,
                const complex_t init) {
-    if (KLFT_VERBOSITY > 5) {
-      printf("Initialize SpinorField with Single Value");
+    if (KLFT_VERBOSITY > 4) {
+      printf("Initialize SpinorField with Single Value\n");
     }
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1, L2, L3);
     tune_and_launch_for<4>(
@@ -81,8 +81,8 @@ struct deviceSpinorField {
   void do_init(const index_t L0, const index_t L1, const index_t L2,
                const index_t L3, SpinorField<Nc, RepDim> &V,
                const Spinor<Nc, RepDim> &init) {
-    if (KLFT_VERBOSITY > 5) {
-      printf("Initialize SpinorField with Spinors");
+    if (KLFT_VERBOSITY > 4) {
+      printf("Initialize SpinorField with Spinors\n");
     }
     Kokkos::realloc(Kokkos::WithoutInitializing, V, L0, L1, L2, L3);
     tune_and_launch_for<4>(
