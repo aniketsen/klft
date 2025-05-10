@@ -162,4 +162,19 @@ KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator*(
   return c;
 }
 
+// Random generation of spinors
+template <size_t Nc, size_t Nd, class RNG>
+KOKKOS_FORCEINLINE_FUNCTION void randSpinor(Spinor<Nc, Nd> &r, RNG &generator,
+                                            const real_t &mean,
+                                            const real_t &var) {
+#pragma unroll
+  for (size_t i = 0; i < Nc; ++i) {
+#pragma unroll
+    for (size_t j = 0; j < Nd; ++j) {
+      r[i][j] =
+          complex_t(generator.normal(mean, var), generator.normal(mean, var));
+    }
+  }
+}
+
 }  // namespace klft

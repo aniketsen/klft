@@ -15,6 +15,18 @@
 
 // We'll assume that our classes are in the klft namespace.
 using namespace klft;
+template <size_t Nc, size_t Nd>
+void print_spinor(const Spinor<Nc, Nd>& s, const char* name = "Spinor") {
+  printf("%s:\n", name);
+  for (size_t c = 0; c < Nc; ++c) {
+    printf("  Color %zu:\n", c);
+    for (size_t d = 0; d < Nd; ++d) {
+      double re = s[c][d].real();
+      double im = s[c][d].imag();
+      printf("    [%zu] = (% .6f, % .6f i)\n", d, re, im);
+    }
+  }
+}
 
 int main(int argc, char* argv[]) {
   // Initialize Kokkos.
@@ -31,6 +43,14 @@ int main(int argc, char* argv[]) {
 
     // Instantiate the spinor field with Nc = 3, DimRep=4 (for example)
     deviceSpinorField<3, 4> spin(L0, L1, L2, L3, init_val);
+    print_spinor(spin(0, 0, 0, 0));
+    std::cout << "\n=== Testing deviceSpinorField with random normal "
+                 "distributed values  ===\n";
+
+    Kokkos::Random_XorShift64_Pool<> random_pool(/*seed=*/12345);
+    deviceSpinorField<3, 4> spinrand(L0, L1, L2, L3, random_pool, 0,
+                                     1.0 / 1.41);
+    print_spinor(spinrand(0, 0, 0, 0));
 
     // Launch a parallel_for to print one field element for mu = 0
     Kokkos::fence();

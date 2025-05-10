@@ -55,6 +55,7 @@ int main(int argc, char const* argv[]) {
   get_gamma1();
   assert(get_gamma5() * id ==
          get_gamma0() * get_gamma1() * get_gamma2() * get_gamma3() * id);
+  printf(HLINE);
   printf("Finished\n");
   return 0;
 }
