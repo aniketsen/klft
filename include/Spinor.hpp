@@ -177,4 +177,19 @@ KOKKOS_FORCEINLINE_FUNCTION void randSpinor(Spinor<Nc, Nd> &r, RNG &generator,
   }
 }
 
+// claculate a^\dagger b
+template <size_t Nc, size_t Nd>
+KOKKOS_FORCEINLINE_FUNCTION complex_t
+spinor_inner_prod(const Spinor<Nc, Nd> &a, const Spinor<Nc, Nd> &b) {
+  complex_t res(0.0, 0.0);
+#pragma unroll
+  for (size_t i = 0; i < Nc; ++i) {
+#pragma unroll
+    for (size_t j = 0; j < Nd; ++j) {
+      res += conj(a[i][j]) * b[i][j];
+    }
+  }
+  return res;
+}
+
 }  // namespace klft

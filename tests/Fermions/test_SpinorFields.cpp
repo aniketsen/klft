@@ -11,6 +11,7 @@
 #include "GLOBAL.hpp"
 // #include "FieldTypeHelper.hpp"
 #include "../../include/SpinorField.hpp"
+#include "../../include/SpinorFieldHelper.hpp"
 #include "../../include/klft.hpp"
 
 // We'll assume that our classes are in the klft namespace.
@@ -43,6 +44,7 @@ int main(int argc, char* argv[]) {
 
     // Instantiate the spinor field with Nc = 3, DimRep=4 (for example)
     deviceSpinorField<3, 4> spin(L0, L1, L2, L3, init_val);
+    Kokkos::fence();
     print_spinor(spin(0, 0, 0, 0));
     std::cout << "\n=== Testing deviceSpinorField with random normal "
                  "distributed values  ===\n";
@@ -51,9 +53,11 @@ int main(int argc, char* argv[]) {
     deviceSpinorField<3, 4> spinrand(L0, L1, L2, L3, random_pool, 0,
                                      1.0 / 1.41);
     print_spinor(spinrand(0, 0, 0, 0));
-
-    // Launch a parallel_for to print one field element for mu = 0
     Kokkos::fence();
+    printf("\n=== Testing Spinor Dot Product  ===\n");
+    auto val = spinor_dot_product<4, 3, 4>(spin, spinrand);
+    Kokkos::fence();
+    printf("% .6f+ % .6f i\n", val.real(), val.imag());
   }
   Kokkos::finalize();
   return 0;
