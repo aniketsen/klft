@@ -228,4 +228,23 @@ const Kokkos::Array<GammaMat<RepDim>, 4> get_gammas() {
   c[3] = get_gamma3();
   return c;
 }
+template <size_t RepDim>
+const GammaMat<RepDim> get_identity()  {
+  GammaMat<RepDim> c;
+  for (size_t i = 0; i < RepDim; ++i)
+  {
+    for (size_t j = 0; j < RepDim; ++j)
+    {
+      c(i,j) = complex_t(0.0,0.0);
+      if (i==j)
+      {
+        c(i,j) = complex_t(1.0,0.0);
+      }
+      
+    }
+    
+  }
+  return c;
+  
+}
 }  // namespace klft
