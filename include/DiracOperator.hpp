@@ -23,6 +23,7 @@
 #include "FieldTypeHelper.hpp"
 #include "GammaMatrix.hpp"
 #include "IndexHelper.hpp"
+#include "Spinor.hpp"
 
 namespace klft {
 // Define a functor for the normal WD operator:
@@ -65,8 +66,8 @@ struct DiracOperator {
       auto xp = shift_index_plus<rank, size_t>(
           Kokkos::Array<size_t, rank>{Idcs...}, mu, 1, dimensions);
 
-      temp +=  (gamma_id - gammas[mu])*0.5  * (g_in(Idcs..., mu) * s_in(xp));
-      temp += (gamma_id + gammas[mu])*0.5 * (conj(g_in(xm, mu)) * s_in(xm));
+      temp += (gamma_id - gammas[mu]) * 0.5 * (g_in(Idcs..., mu) * s_in(xp));
+      temp += (gamma_id + gammas[mu]) * 0.5 * (conj(g_in(xm, mu)) * s_in(xm));
     }
     // Is the +4 correct? Instead of += only = depending on how s_out is
     // initialized or used!
@@ -139,8 +140,8 @@ struct HDiracOperator {
       auto xp = shift_index_plus<rank, size_t>(
           Kokkos::Array<size_t, rank>{Idcs...}, mu, 1, dimensions);
 
-      temp += 0.5 * (gamma_id - gammas[mu]) * g_in(Idcs..., mu) * s_in(xp);
-      temp += 0.5 * (gamma_id + gammas[mu]) * conj(g_in(xm, mu)) * s_in(xm);
+      temp += (gamma_id - gammas[mu]) * 0.5 * (g_in(Idcs..., mu) * s_in(xp));
+      temp += (gamma_id + gammas[mu]) * 0.5 * (conj(g_in(xm, mu)) * s_in(xm));
     }
     // Is the +4 correct? Instead of += only = depending on how s_out is
     // initialized or used!
@@ -154,6 +155,7 @@ KOKKOS_FORCEINLINE_FUNCTION
     apply_HD(const typename DeviceSpinorFieldType<rank, Nc, RepDim>::type& s_in,
              const typename DeviceGaugeFieldType<rank, Nc>::type& g_in,
              const Kokkos::Array<GammaMat<RepDim>, 4>& gammas,
+             const GammaMat<RepDim>& gamma5,
              const real_t& mass) {
   const auto& dimensions = s_in.field.layout().dimension;
   IndexArray<rank> start;
@@ -167,7 +169,8 @@ KOKKOS_FORCEINLINE_FUNCTION
   SpinorFieldType s_out(end, complex_t(0.0, 0.0));
 
   // Define the functor
-  HDiracOperator<rank, Nc, RepDim> HD(s_out, s_in, g_in, gammas, end, mass);
+  HDiracOperator<rank, Nc, RepDim> HD(s_out, s_in, g_in, gammas, gamma5, end,
+                                      mass);
 
   tune_and_launch_for<rank>("Apply_Dirac_Operator", start, end, HD);
   Kokkos::fence();
