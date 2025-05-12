@@ -11,11 +11,14 @@ using namespace klft;
 #define HLINE "=========================================================\n"
 
 template <size_t Nc, size_t Nd>
-void print_spinor(const Spinor<Nc, Nd>& s, const char* name = "Spinor") {
+void print_spinor(const Spinor<Nc, Nd> &s, const char *name = "Spinor")
+{
   printf("%s:\n", name);
-  for (size_t c = 0; c < Nc; ++c) {
+  for (size_t c = 0; c < Nc; ++c)
+  {
     printf("  Color %zu:\n", c);
-    for (size_t d = 0; d < Nd; ++d) {
+    for (size_t d = 0; d < Nd; ++d)
+    {
       double re = s[c][d].real();
       double im = s[c][d].imag();
       printf("    [%zu] = (% .6f, % .6f i)\n", d, re, im);
@@ -23,7 +26,8 @@ void print_spinor(const Spinor<Nc, Nd>& s, const char* name = "Spinor") {
   }
 }
 
-int main(int argc, char const* argv[]) {
+int main(int argc, char const *argv[])
+{
   printf(HLINE);
   printf("Testing Spinor GammaMatrix interaction\n");
   printf(HLINE);
@@ -46,9 +50,11 @@ int main(int argc, char const* argv[]) {
   printf("Testing Gamma*Spinor: \n");
   Spinor<3, 4> id = zeroSpinor<3, 4>();
 #pragma unroll
-  for (size_t i = 0; i < 3; ++i) {
+  for (size_t i = 0; i < 3; ++i)
+  {
 #pragma unroll
-    for (size_t j = 0; j < 4; ++j) {
+    for (size_t j = 0; j < 4; ++j)
+    {
       id[i][j] = complex_t(i * 4 + j, 0.0);
     }
   }
