@@ -117,27 +117,27 @@ int main(int argc, char* argv[]) {
     printf("Generate SpinorFields...\n");
 
     Kokkos::Random_XorShift64_Pool<> random_pool(/*seed=*/1234);
-    deviceSpinorField<2, 4> u_U1(L0, L1, L2, L3, random_pool, 0, 1.0 / 1.41);
-    deviceSpinorField<2, 4> v_U1(L0, L1, L2, L3, random_pool, 0, 1.0 / 1.41);
-    real_t norm_U1 = spinor_norm<4, 2, 4>(u_U1);
-    norm_U1 *= spinor_norm<4, 2, 4>(v_U1);
+    deviceSpinorField<1, 4> u_U1(L0, L1, L2, L3, random_pool, 0, 1.0 / 1.41);
+    deviceSpinorField<1, 4> v_U1(L0, L1, L2, L3, random_pool, 0, 1.0 / 1.41);
+    real_t norm_U1 = spinor_norm<4, 1, 4>(u_U1);
+    norm_U1 *= spinor_norm<4, 1, 4>(v_U1);
     norm_U1 = Kokkos::sqrt(norm_U1);
 
     printf("Generating Random Gauge Config\n");
-    deviceGaugeField<4, 2> gauge_U1(L0, L1, L2, L3, random_pool, 1);
+    deviceGaugeField<4, 1> gauge_U1(L0, L1, L2, L3, random_pool, 1);
 
     printf("Apply DiracOperator...\n");
 
-    deviceSpinorField<2, 4> Mu_U1 =
-        apply_HD<4, 2, 4>(u_U1, gauge_U1, gammas, gamma5, -0.5);
-    deviceSpinorField<2, 4> Mv_U1 =
-        apply_HD<4, 2, 4>(v_U1, gauge_U1, gammas, gamma5, -0.5);
+    deviceSpinorField<1, 4> Mu_U1 =
+        apply_HD<4, 1, 4>(u_U1, gauge_U1, gammas, gamma5, -0.5);
+    deviceSpinorField<1, 4> Mv_U1 =
+        apply_HD<4, 1, 4>(v_U1, gauge_U1, gammas, gamma5, -0.5);
     // deviceSpinorField<3, 4> Mu = apply_D<4, 3, 4>(u, gauge, gammas, -0.5);
     // deviceSpinorField<3, 4> Mv = apply_D<4, 3, 4>(v, gauge, gammas, -0.5);
 
     printf("Calculate Scalarproducts...\n");
-    auto r1_U1 = spinor_dot_product<4, 2, 4>(u_U1, Mv_U1);
-    auto r2_U1 = spinor_dot_product<4, 2, 4>(Mu_U1, v_U1);
+    auto r1_U1 = spinor_dot_product<4, 1, 4>(u_U1, Mv_U1);
+    auto r2_U1 = spinor_dot_product<4, 1, 4>(Mu_U1, v_U1);
 
     auto r_U1 = r1_U1 - r2_U1;
 
