@@ -57,7 +57,7 @@ KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator*(
 }
 template <size_t Nc, size_t Nd>
 KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator*=(
-    const Spinor<Nc, Nd> &spinor, const complex_t &scalar) {
+     Spinor<Nc, Nd> &spinor, const complex_t &scalar) {
   Spinor<Nc, Nd> res = scalar * spinor;
   spinor = res;
   return spinor;
@@ -78,7 +78,7 @@ KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator*(
 }
 template <size_t Nc, size_t Nd>
 KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator*=(
-    const Spinor<Nc, Nd> &spinor, const real_t &scalar) {
+     Spinor<Nc, Nd> &spinor, const real_t &scalar) {
   Spinor<Nc, Nd> res = scalar * spinor;
   spinor = res;
   return spinor;
@@ -99,7 +99,7 @@ KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator+(
 }
 template <size_t Nc, size_t Nd>
 KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator+=(
-    const Spinor<Nc, Nd> &spinor1, const Spinor<Nc, Nd> &spinor2) {
+     Spinor<Nc, Nd> &spinor1, const Spinor<Nc, Nd> &spinor2) {
   Spinor<Nc, Nd> res = spinor1 + spinor2;
   spinor1 = res;
   return spinor1;
@@ -120,7 +120,7 @@ KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator-(
 }
 template <size_t Nc, size_t Nd>
 KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator-=(
-    const Spinor<Nc, Nd> &spinor1, const Spinor<Nc, Nd> &spinor2) {
+     Spinor<Nc, Nd> &spinor1, const Spinor<Nc, Nd> &spinor2) {
   Spinor<Nc, Nd> res = spinor1 - spinor2;
   spinor1 = res;
   return spinor1;
