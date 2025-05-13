@@ -17,8 +17,9 @@
 //
 //******************************************************************************/
 
-// this file defines various versions of the Wilson-Dirac (WD) operator
-
+// this file defines various versions of the Wilson-Dirac (WD) operator, in
+// lattice units following Gattringer2010 (5.55) f. and absorbing the constant C
+// into the field definition
 #pragma once
 #include "FieldTypeHelper.hpp"
 #include "GammaMatrix.hpp"
@@ -41,20 +42,20 @@ struct DiracOperator {
   const VecGammaMatrix gammas;
   const GammaMat<RepDim> gamma_id = get_identity<RepDim>();
   const IndexArray<rank> dimensions;
-  const real_t mass;
+  const real_t kappa;
   DiracOperator(SpinorFieldType& s_out,
                 const SpinorFieldType& s_in,
                 const GaugeFieldType& g_in,
                 const VecGammaMatrix& gammas,
                 const IndexArray<rank>& dimensions,
-                const real_t& mass)
+                const real_t& kappa)
       : s_out(s_out),
         s_in(s_in),
         g_in(g_in),
         gammas(gammas),
 
         dimensions(dimensions),
-        mass(mass) {}
+        kappa(kappa) {}
 
   template <typename... Indices>
   KOKKOS_FORCEINLINE_FUNCTION void operator()(const Indices... Idcs) const {
@@ -71,7 +72,7 @@ struct DiracOperator {
     }
     // Is the +4 correct? Instead of += only = depending on how s_out is
     // initialized or used!
-    s_out(Idcs...) += (mass + 4) * s_in(Idcs...) - temp;
+    s_out(Idcs...) += s_in(Idcs...) - kappa * temp;
   }
 };
 template <size_t rank, size_t Nc, size_t RepDim>
@@ -79,7 +80,7 @@ typename DeviceSpinorFieldType<rank, Nc, RepDim>::type apply_D(
     const typename DeviceSpinorFieldType<rank, Nc, RepDim>::type& s_in,
     const typename DeviceGaugeFieldType<rank, Nc>::type& g_in,
     const Kokkos::Array<GammaMat<RepDim>, 4>& gammas,
-    const real_t& mass) {
+    const real_t& kappa) {
   const auto& dimensions = s_in.field.layout().dimension;
   IndexArray<rank> start;
   IndexArray<rank> end;
@@ -92,7 +93,7 @@ typename DeviceSpinorFieldType<rank, Nc, RepDim>::type apply_D(
   SpinorFieldType s_out(end, complex_t(0.0, 0.0));
 
   // Define the functor
-  DiracOperator<rank, Nc, RepDim> D(s_out, s_in, g_in, gammas, end, mass);
+  DiracOperator<rank, Nc, RepDim> D(s_out, s_in, g_in, gammas, end, kappa);
 
   tune_and_launch_for<rank>("Apply_Dirac_Operator", start, end, D);
   Kokkos::fence();
@@ -114,21 +115,21 @@ struct HDiracOperator {
   const GammaMat<RepDim> gamma5;
   const GammaMat<RepDim> gamma_id = get_identity<RepDim>();
   const IndexArray<rank> dimensions;
-  const real_t mass;
+  const real_t kappa;
   HDiracOperator(SpinorFieldType& s_out,
                  const SpinorFieldType& s_in,
                  const GaugeFieldType& g_in,
                  const VecGammaMatrix& gammas,
                  const GammaMat<RepDim> gamma5,
                  const IndexArray<rank>& dimensions,
-                 const real_t& mass)
+                 const real_t& kappa)
       : s_out(s_out),
         s_in(s_in),
         g_in(g_in),
         gammas(gammas),
         gamma5(gamma5),
         dimensions(dimensions),
-        mass(mass) {}
+        kappa(kappa) {}
 
   template <typename... Indices>
   KOKKOS_FORCEINLINE_FUNCTION void operator()(const Indices... Idcs) const {
@@ -145,7 +146,7 @@ struct HDiracOperator {
     }
     // Is the +4 correct? Instead of += only = depending on how s_out is
     // initialized or used!
-    s_out(Idcs...) += gamma5 * ((mass + 4) * s_in(Idcs...) - temp);
+    s_out(Idcs...) += gamma5 * (s_in(Idcs...) - kappa * temp);
   }
 };
 
@@ -156,7 +157,7 @@ KOKKOS_FORCEINLINE_FUNCTION
              const typename DeviceGaugeFieldType<rank, Nc>::type& g_in,
              const Kokkos::Array<GammaMat<RepDim>, 4>& gammas,
              const GammaMat<RepDim>& gamma5,
-             const real_t& mass) {
+             const real_t& kappa) {
   const auto& dimensions = s_in.field.layout().dimension;
   IndexArray<rank> start;
   IndexArray<rank> end;
@@ -170,7 +171,7 @@ KOKKOS_FORCEINLINE_FUNCTION
 
   // Define the functor
   HDiracOperator<rank, Nc, RepDim> HD(s_out, s_in, g_in, gammas, gamma5, end,
-                                      mass);
+                                      kappa);
 
   tune_and_launch_for<rank>("Apply_Dirac_Operator", start, end, HD);
   Kokkos::fence();
