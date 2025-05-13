@@ -6,11 +6,23 @@
 #include "../../include/DiracOperator.hpp"
 #include "../../include/GammaMatrix.hpp"
 #include "../../include/SpinorField.hpp"
-#include "../../include/SpinorFieldHelper.hpp"
+#include "../../include/SpinorFieldLinAlg.hpp"
 #include "../../include/klft.hpp"
 #define HLINE "=========================================================\n"
 
 using namespace klft;
+template <size_t Nc, size_t Nd>
+void print_spinor(const Spinor<Nc, Nd>& s, const char* name = "Spinor") {
+  printf("%s:\n", name);
+  for (size_t c = 0; c < Nc; ++c) {
+    printf("  Color %zu:\n", c);
+    for (size_t d = 0; d < Nd; ++d) {
+      double re = s[c][d].real();
+      double im = s[c][d].imag();
+      printf("    [%zu] = (% .6f, % .6f i)\n", d, re, im);
+    }
+  }
+}
 
 int main(int argc, char* argv[]) {
   Kokkos::initialize(argc, argv);
@@ -260,6 +272,8 @@ int main(int argc, char* argv[]) {
     real_t norm_trafo_U1 = spinor_norm<4, 1, 4>(u_U1);
     // Dont know if this function is needed again, therefore only defined here,
     // and not in an include file.
+    printf("Spinor before Gauge Trafo:\n");
+    print_spinor(u_U1(0, 0, 0, 0));
     printf("Apply Gauge Trafos...\n");
     tune_and_launch_for<4>(
         "Gauge Trafo", IndexArray<4>{0, 0, 0, 0}, IndexArray<4>{L0, L1, L2, L3},
@@ -281,6 +295,8 @@ int main(int argc, char* argv[]) {
           Mu_U1(i0, i1, i2, i3) =
               gaugeTrafo_U1(i0, i1, i2, i3, 1) * Mu_U1(i0, i1, i2, i3);
         });
+    printf("Spinor after Gauge Trafo:\n");
+    print_spinor(u_U1(0, 0, 0, 0));
     deviceSpinorField<1, 4> Mu_trafo_U1 =
         apply_HD<4, 1, 4>(u_U1, gauge_U1, gammas, gamma5, -0.5);
     tune_and_launch_for<4>(

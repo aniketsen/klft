@@ -11,7 +11,7 @@
 #include "GLOBAL.hpp"
 // #include "FieldTypeHelper.hpp"
 #include "../../include/SpinorField.hpp"
-#include "../../include/SpinorFieldHelper.hpp"
+#include "../../include/SpinorFieldLinAlg.hpp"
 #include "../../include/klft.hpp"
 
 // We'll assume that our classes are in the klft namespace.
