@@ -178,4 +178,39 @@ KOKKOS_FORCEINLINE_FUNCTION
   return s_out;
 }
 
+// For now relay on apply_HD twice, performance wise not the best
+// Q is hermitian so Q^\daggerQ = Q^2
+template <size_t rank, size_t Nc, size_t RepDim>
+KOKKOS_FORCEINLINE_FUNCTION
+    typename DeviceSpinorFieldType<rank, Nc, RepDim>::type
+    apply_HD_sq(
+        const typename DeviceSpinorFieldType<rank, Nc, RepDim>::type& s_in,
+        const typename DeviceGaugeFieldType<rank, Nc>::type& g_in,
+        const Kokkos::Array<GammaMat<RepDim>, 4>& gammas,
+        const GammaMat<RepDim>& gamma5,
+        const real_t& kappa) {
+  const auto& dimensions = s_in.field.layout().dimension;
+  IndexArray<rank> start;
+  IndexArray<rank> end;
+  for (index_t i = 0; i < rank; ++i) {
+    start[i] = 0;
+    end[i] = dimensions[i];
+  }
+  using SpinorFieldType =
+      typename DeviceSpinorFieldType<rank, Nc, RepDim>::type;
+  SpinorFieldType s_out(end, complex_t(0.0, 0.0));
+  SpinorFieldType s_temp(end, complex_t(0.0, 0.0));
+  // Define the functors
+  HDiracOperator<rank, Nc, RepDim> HD_1(s_temp, s_in, g_in, gammas, gamma5, end,
+                                        kappa);
+  // Define the functor
+  HDiracOperator<rank, Nc, RepDim> HD_2(s_out, s_temp, g_in, gammas, gamma5,
+                                        end, kappa);
+  tune_and_launch_for<rank>("Apply_Dirac_Operator", start, end, HD_1);
+  Kokkos::fence();
+  tune_and_launch_for<rank>("Apply_Dirac_Operator", start, end, HD_2);
+  Kokkos::fence();
+  return s_out;
+}
+
 }  // namespace klft
