@@ -28,6 +28,7 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 # build the library
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib ${CMAKE_CURRENT_BINARY_DIR}/lib)
 
+
 # build the binaries
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/binaries ${CMAKE_CURRENT_BINARY_DIR}/binaries)
 
