@@ -1,2 +1,0 @@
-# add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/PTBCCompileTests ${CMAKE_CURRENT_BINARY_DIR}/PTBCCompileTests)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/Fermions ${CMAKE_CURRENT_BINARY_DIR}/Fermions)
