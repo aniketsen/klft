@@ -28,7 +28,7 @@ template <size_t Nc, size_t Nd>
 KOKKOS_FORCEINLINE_FUNCTION Spinor<Nc, Nd> operator*(
     const SUN<Nc>& U,
     const Spinor<Nc, Nd>& spinor) {
-  Spinor<Nc, Nd> res;
+  Spinor<Nc, Nd> res{};
 #pragma unroll
   for (size_t i = 0; i < Nc; i++) {
 #pragma unroll
