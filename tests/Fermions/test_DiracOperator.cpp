@@ -268,7 +268,7 @@ int main(int argc, char* argv[]) {
     printf("Generating Random Gauge Transformation...\n");
     // Use the normal GaugeField, because it can be initialised with random
     // SU(3) matrices, however only use mu = 0
-    deviceGaugeField<4, 1> gaugeTrafo_U1(L0, L1, L2, L3, random_pool, 10);
+    deviceGaugeField<4, 1> gaugeTrafo_U1(L0, L1, L2, L3, random_pool, 1);
     real_t norm_trafo_U1 = spinor_norm<4, 1, 4>(u_U1);
     // Dont know if this function is needed again, therefore only defined here,
     // and not in an include file.
