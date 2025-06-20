@@ -1,185 +1,210 @@
 #pragma once
 #include "AdjointGroup.hpp"
+#include "AdjointSUN.hpp"
+#include "GLOBAL.hpp"
+#include "Kokkos_Core.hpp"
+#include "Kokkos_Macros.hpp"
+#include "Tuner.hpp"
+#include "View/Kokkos_ViewCtor.hpp"
 
 namespace klft {
 
-  template <typename T, class Adjoint, int Ndim = 4, int Nc = 3>
-  class AdjointField {
-  public:
-    struct set_zero_s {};
-    using DeviceView = Kokkos::View<T****>;
+template <size_t Nd, size_t Nc> struct deviceAdjointField {
 
-    DeviceView adjoint[Ndim][2*Nc-1];
+  deviceAdjointField() = delete;
 
-    int LT,LX,LY,LZ;
-    Kokkos::Array<int,4> dims;
-    Kokkos::Array<int,4> max_dims;
-    Kokkos::Array<int,4> array_dims;
+  SUNAdjField<Nd, Nc> field;
+  IndexArray<Nd> dimensions;
 
-    typedef Adjoint adjoint_group_t;
+  deviceAdjointField(const index_t L0, const index_t L1, const index_t L2,
+                     const index_t L3, const SUNAdj<Nc> &init)
+      : dimensions({L0, L1, L2, L3}) {
+    do_init(field, init);
+  }
 
-    AdjointField() = default;
+  void do_init(SUNAdjField<Nd, Nc> &V, const SUNAdj<Nc> &init) {
+    Kokkos::realloc(Kokkos::WithoutInitializing, V, dimensions[0],
+                    dimensions[1], dimensions[2], dimensions[3]);
+    tune_and_launch_for(
+        "init_DeviceAdjointField", IndexArray<Nd>{0}, dimensions,
+        KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
+                      const index_t i3) {
+#pragma unroll
+          for (index_t mu = 0; mu < Nd; ++mu) {
+            V(i0, i1, i2, i3, mu) = init;
+          }
+        });
+  }
 
-    template <int N = Ndim, typename std::enable_if<N == 4, int>::type = 0>
-    AdjointField(const int &_LX, const int &_LY, const int &_LZ, const int &_LT) {
-      this->LX = _LX;
-      this->LY = _LY;
-      this->LZ = _LZ;
-      this->LT = _LT;
-      for(int i = 0; i < 2*Nc-1; ++i) {
-        for(int mu = 0; mu < Ndim; ++mu) {
-          this->adjoint[mu][i] = DeviceView(Kokkos::view_alloc(Kokkos::WithoutInitializing, "adjoint"), LX, LY, LZ, LT);
-        }
-      }
-      this->dims = {LX,LY,LZ,LT};
-      this->max_dims = {LX,LY,LZ,LT};
-      this->array_dims = {0,1,2,3};
-    }
+  template <class RNG> void randomize_field(RNG &rng) {
+    tune_and_launch_for(
+        "randomize_adj_field", IndexArray<Nd>{0}, dimensions,
+        KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
+                      const index_t i3) {
+          auto generator = rng.get_state();
+          for (index_t mu = 0; mu < Nd; ++mu) {
+            randSUNAdj<Nc>((*this)(i0, i1, i2, i3, mu), generator);
+          }
+          rng.free_state(generator);
+        });
+  }
 
-    template <int N = Ndim, typename std::enable_if<N == 4, int>::type = 0>
-    AdjointField(const Kokkos::Array<int,4> &_dims) {
-      this->LX = _dims[0];
-      this->LY = _dims[1];
-      this->LZ = _dims[2];
-      this->LT = _dims[3];
-      for(int i = 0; i < 2*Nc-1; ++i) {
-        for(int mu = 0; mu < Ndim; ++mu) {
-          this->adjoint[mu][i] = DeviceView(Kokkos::view_alloc(Kokkos::WithoutInitializing, "adjoint"), LX, LY, LZ, LT);
-        }
-      }
-      this->dims = {LX,LY,LZ,LT};
-      this->max_dims = {LX,LY,LZ,LT};
-      this->array_dims = {0,1,2,3};
-    }
+  // define accessors for the field
+  template <typename indexType>
+  KOKKOS_FORCEINLINE_FUNCTION SUNAdj<Nc> &
+  operator()(const indexType i, const indexType j, const indexType k,
+             const indexType l, const index_t mu) const {
+    return field(i, j, k, l, mu);
+  }
 
-    template <int N = Ndim, typename std::enable_if<N == 3, int>::type = 0>
-    AdjointField(const int &_LX, const int &_LY, const int &_LT) {
-      this->LX = _LX;
-      this->LY = _LY;
-      this->LT = _LT;
-      this->LZ = 1;
-      for(int i = 0; i < 2*Nc-1; ++i) {
-        for(int mu = 0; mu < Ndim; ++mu) {
-          this->adjoint[mu][i] = DeviceView(Kokkos::view_alloc(Kokkos::WithoutInitializing, "adjoint"), LX, LY, LZ, LT);
-        }
-      }
-      this->dims = {LX,LY,LT};
-      this->max_dims = {LX,LY,LZ,LT};
-      this->array_dims = {0,1,3,-100};
-    }
+  template <typename indexType>
+  KOKKOS_FORCEINLINE_FUNCTION SUNAdj<Nc> &
+  operator()(const indexType i, const indexType j, const indexType k,
+             const indexType l, const index_t mu) {
+    return field(i, j, k, l, mu);
+  }
 
-    template <int N = Ndim, typename std::enable_if<N == 3, int>::type = 0>
-    AdjointField(const Kokkos::Array<int,3> &_dims) {
-      this->LX = _dims[0];
-      this->LY = _dims[1];
-      this->LT = _dims[2];
-      this->LZ = 1;
-      for(int i = 0; i < 2*Nc-1; ++i) {
-        for(int mu = 0; mu < Ndim; ++mu) {
-          this->adjoint[mu][i] = DeviceView(Kokkos::view_alloc(Kokkos::WithoutInitializing, "adjoint"), LX, LY, LZ, LT);
-        }
-      }
-      this->dims = {LX,LY,LT};
-      this->max_dims = {LX,LY,LZ,LT};
-      this->array_dims = {0,1,3,-100};
-    }
+  // define accessors with 4D Kokkos array
+  template <typename indexType>
+  KOKKOS_FORCEINLINE_FUNCTION SUNAdj<Nc> &
+  operator()(const Kokkos::Array<indexType, 4> site, const index_t mu) const {
+    return field(site[0], site[1], site[2], site[3], mu);
+  }
 
-    template <int N = Ndim, typename std::enable_if<N == 2, int>::type = 0>
-    AdjointField(const int &_LX, const int &_LT) {
-      this->LX = _LX;
-      this->LT = _LT;
-      this->LY = 1;
-      this->LZ = 1;
-      for(int i = 0; i < 2*Nc-1; ++i) {
-        for(int mu = 0; mu < Ndim; ++mu) {
-          this->adjoint[mu][i] = DeviceView(Kokkos::view_alloc(Kokkos::WithoutInitializing, "adjoint"), LX, LY, LZ, LT);
-        }
-      }
-      this->dims = {LX,LT};
-      this->max_dims = {LX,LY,LZ,LT};
-      this->array_dims = {0,3,-100,-100};
-    }
+  template <typename indexType>
+  KOKKOS_FORCEINLINE_FUNCTION SUNAdj<Nc> &
+  operator()(const Kokkos::Array<indexType, 4> site, const index_t mu) {
+    return field(site[0], site[1], site[2], site[3], mu);
+  }
+};
 
-    template <int N = Ndim, typename std::enable_if<N == 2, int>::type = 0>
-    AdjointField(const Kokkos::Array<int,2> &_dims) {
-      this->LX = _dims[0];
-      this->LT = _dims[1];
-      this->LY = 1;
-      this->LZ = 1;
-      for(int i = 0; i < 2*Nc-1; ++i) {
-        for(int mu = 0; mu < Ndim; ++mu) {
-          this->adjoint[mu][i] = DeviceView(Kokkos::view_alloc(Kokkos::WithoutInitializing, "adjoint"), LX, LY, LZ, LT);
-        }
-      }
-      this->dims = {LX,LT};
-      this->max_dims = {LX,LY,LZ,LT};
-      this->array_dims = {0,3,-100,-100};
-    }
+template <size_t Nd, size_t Nc> struct deviceAdjointField3D {
 
-    KOKKOS_INLINE_FUNCTION int get_Ndim() const { return Ndim; }
+  deviceAdjointField3D() = delete;
 
-    KOKKOS_INLINE_FUNCTION int get_Nc() const { return Nc; }
+  SUNAdjField3D<Nd, Nc> field;
+  IndexArray<Nd> dimensions;
 
-    KOKKOS_INLINE_FUNCTION int get_volume() const { return this->LX*this->LY*this->LZ*this->LT; }
+  deviceAdjointField3D(const index_t L0, const index_t L1, const index_t L2,
+                       const SUNAdj<Nc> &init)
+      : dimensions({L0, L1, L2}) {
+    do_init(field, init);
+  }
+  void do_init(SUNAdjField3D<Nd, Nc> &V, const SUNAdj<Nc> &init) {
+    Kokkos::realloc(Kokkos::WithoutInitializing, V, dimensions[0],
+                    dimensions[1], dimensions[2]);
+    tune_and_launch_for(
+        "init_DeviceAdjointField", IndexArray<Nd>{0}, dimensions,
+        KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2) {
+#pragma unroll
+          for (index_t mu = 0; mu < Nd; ++mu) {
+            V(i0, i1, i2, mu) = init;
+          }
+        });
+  }
 
-    KOKKOS_INLINE_FUNCTION int get_size() const { return this->LX*this->LY*this->LZ*this->LT*Ndim*(2*Nc-1); }
+  template <class RNG> void randomize_field(RNG &rng) {
+    tune_and_launch_for(
+        "randomize_adj_field", IndexArray<Nd>{0}, dimensions,
+        KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2) {
+          auto generator = rng.get_state();
+          for (index_t mu = 0; mu < Nd; ++mu) {
+            randSUNAdj<Nc>((*this)(i0, i1, i2, mu), generator);
+          }
+          rng.free_state(generator);
+        });
+  }
 
-    KOKKOS_INLINE_FUNCTION int get_dim(const int &mu) const {
-      return this->dims[mu];
-    }
+  // define accessors for the field
+  template <typename indexType>
+  KOKKOS_FORCEINLINE_FUNCTION SUNAdj<Nc> &
+  operator()(const indexType i, const indexType j, const indexType k,
+             const index_t mu) const {
+    return field(i, j, k, mu);
+  }
 
-    KOKKOS_FUNCTION int get_max_dim(const int &mu) const {
-      return this->max_dims[mu];
-    }
+  template <typename indexType>
+  KOKKOS_FORCEINLINE_FUNCTION SUNAdj<Nc> &
+  operator()(const indexType i, const indexType j, const indexType k,
+             const index_t mu) {
+    return field(i, j, k, mu);
+  }
 
-    KOKKOS_FUNCTION int get_array_dim(const int &mu) const {
-      return this->array_dims[mu];
-    }
+  // define accessors with 4D Kokkos array
+  template <typename indexType>
+  KOKKOS_FORCEINLINE_FUNCTION SUNAdj<Nc> &
+  operator()(const Kokkos::Array<indexType, 3> site, const index_t mu) const {
+    return field(site[0], site[1], site[2], mu);
+  }
 
-    KOKKOS_INLINE_FUNCTION Adjoint get_adjoint(const int &x, const int &y, const int &z, const int &t, const int &mu) const {
-      Kokkos::Array<T,2*Nc-1> adj;
-      #pragma unroll
-      for(int i = 0; i < 2*Nc-1; i++) {
-        adj[i] = this->adjoint[mu][i](x,y,z,t);
-      }
-      return Adjoint(adj);
-    }
+  template <typename indexType>
+  KOKKOS_FORCEINLINE_FUNCTION SUNAdj<Nc> &
+  operator()(const Kokkos::Array<indexType, 3> site, const index_t mu) {
+    return field(site[0], site[1], site[2], mu);
+  }
+};
 
-    KOKKOS_INLINE_FUNCTION Adjoint get_adjoint(const Kokkos::Array<int,4> &site, const int &mu) const {
-      Kokkos::Array<T,2*Nc-1> adj;
-      #pragma unroll
-      for(int i = 0; i < 2*Nc-1; i++) {
-        adj[i] = this->adjoint[mu][i](site[0],site[1],site[2],site[3]);
-      }
-      return Adjoint(adj);
-    }
+template <size_t Nd, size_t Nc> struct deviceAdjointField2D {
 
-    KOKKOS_INLINE_FUNCTION void set_adjoint(const int &x, const int &y, const int &z, const int &t, const int &mu, const Adjoint &U) const {
-      #pragma unroll
-      for(int i = 0; i < 2*Nc-1; i++) {
-        this->adjoint[mu][i](x,y,z,t) = U(i);
-      }
-    }
+  deviceAdjointField2D() = delete;
 
-    KOKKOS_INLINE_FUNCTION void set_adjoint(const Kokkos::Array<int,4> &site, const int &mu, const Adjoint &U) {
-      #pragma unroll
-      for(int i = 0; i < 2*Nc-1; i++) {
-        this->adjoint[mu][i](site[0],site[1],site[2],site[3]) = U(i);
-      }
-    }
+  SUNAdjField2D<Nd, Nc> field;
+  IndexArray<Nd> dimensions;
 
-    KOKKOS_INLINE_FUNCTION void operator()(set_zero_s, const int &x, const int &y, const int &z, const int &t, const int &mu) const {
-      #pragma unroll
-      for(int i = 0; i < 2*Nc-1; i++) {
-        this->adjoint[mu][i](x,y,z,t) = 0.0;
-      }
-    }
+  deviceAdjointField2D(const index_t L0, const index_t L1,
+                       const SUNAdj<Nc> &init)
+      : dimensions({L0, L1}) {
+    do_init(field, init);
+  }
+  void do_init(SUNAdjField2D<Nd, Nc> &V, const SUNAdj<Nc> &init) {
+    Kokkos::realloc(Kokkos::WithoutInitializing, V, dimensions[0],
+                    dimensions[1]);
+    tune_and_launch_for(
+        "init_DeviceAdjointField", IndexArray<Nd>{0}, dimensions,
+        KOKKOS_LAMBDA(const index_t i0, const index_t i1) {
+#pragma unroll
+          for (index_t mu = 0; mu < Nd; ++mu) {
+            V(i0, i1, mu) = init;
+          }
+        });
+  }
 
-    void set_zero() {
-      auto BulkPolicy = Kokkos::MDRangePolicy<set_zero_s,Kokkos::Rank<5>>({0,0,0,0,0},{this->LX,this->LY,this->LZ,this->LT,Ndim});
-      Kokkos::parallel_for("set_zero", BulkPolicy, *this);
-    }
+  template <class RNG> void randomize_field(RNG &rng) {
+    tune_and_launch_for(
+        "randomize_adj_field", IndexArray<Nd>{0}, dimensions,
+        KOKKOS_LAMBDA(const index_t i0, const index_t i1) {
+          auto generator = rng.get_state();
+          for (index_t mu = 0; mu < Nd; ++mu) {
+            randSUNAdj<Nc>((*this)(i0, i1, mu), generator);
+          }
+          rng.free_state(generator);
+        });
+  }
 
-  };
+  // define accessors for the field
+  template <typename indexType>
+  KOKKOS_FORCEINLINE_FUNCTION SUNAdj<Nc> &
+  operator()(const indexType i, const indexType j, const index_t mu) const {
+    return field(i, j, mu);
+  }
 
+  template <typename indexType>
+  KOKKOS_FORCEINLINE_FUNCTION SUNAdj<Nc> &
+  operator()(const indexType i, const indexType j, const index_t mu) {
+    return field(i, j, mu);
+  }
+
+  // define accessors with 4D Kokkos array
+  template <typename indexType>
+  KOKKOS_FORCEINLINE_FUNCTION SUNAdj<Nc> &
+  operator()(const Kokkos::Array<indexType, 2> site, const index_t mu) const {
+    return field(site[0], site[1], mu);
+  }
+
+  template <typename indexType>
+  KOKKOS_FORCEINLINE_FUNCTION SUNAdj<Nc> &
+  operator()(const Kokkos::Array<indexType, 2> site, const index_t mu) {
+    return field(site[0], site[1], mu);
+  }
+};
 } // namespace klft

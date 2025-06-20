@@ -18,82 +18,239 @@
 //******************************************************************************/
 
 // utility functions for gauge fields
-
+#pragma once
+#include "FieldTypeHelper.hpp"
+#include "GLOBAL.hpp"
 #include "GaugeField.hpp"
+#include "Kokkos_Macros.hpp"
+#include "PTBCGaugeField.hpp"
+#include "SUN.hpp"
 
-namespace klft
-{
-  // calculate staple per site and store in another gauge field
-  template <size_t Nd, size_t Nc>
-  const constGaugeField<Nd,Nc> stapleField(const deviceGaugeField<Nd,Nc> g_in) {
-    // initialize the output field
-    deviceGaugeField<Nd,Nc> g_out(g_in.field.extent(0), g_in.field.extent(1), 
-                                  g_in.field.extent(2), g_in.field.extent(3), complex_t(0.0, 0.0));
-    // get the start and end indices
-    const auto & dimensions = g_in.field.layout().dimension;
-    IndexArray<Nd> start;
-    IndexArray<Nd> end;
-    for (index_t i = 0; i < Nd; ++i) {
-      start[i] = 0;
-      end[i] = dimensions[i];
+namespace klft {
+
+template <size_t Nd, typename FieldA, typename FieldB>
+struct GaugeFieldMultFunctor;
+
+template <typename FieldA, typename FieldB>
+struct GaugeFieldMultFunctor<2, FieldA, FieldB> {
+  FieldA a;
+  FieldB b;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator()(index_t i0, index_t i1) {
+    for (index_t mu = 0; mu < 2; ++mu) {
+      a(i0, i1, mu) *= b(i0, i1, mu);
     }
+  }
+};
 
-    // store the field in a const gauge field
-    const constGaugeField<Nd,Nc> g(g_in.field);
+template <typename FieldA, typename FieldB>
+struct GaugeFieldMultFunctor<3, FieldA, FieldB> {
+  FieldA a;
+  FieldB b;
 
-    // tune and launch the kernel
-    tune_and_launch_for<Nd>("stapleField_GaugeField", start, end,
-      KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2, const index_t i3) {
-        // iterate over mu, store staple for each mu
-        #pragma unroll
-        for(index_t mu = 0; mu < Nd; ++mu) { // loop over mu
-          // temp SUN matrices to store products
-          SUN<Nc> temp = zeroSUN<Nc>();
-          // get the x + mu indices
-          const index_t i0pmu = mu == 0 ? (i0 + 1) % dimensions[0] : i0;
-          const index_t i1pmu = mu == 1 ? (i1 + 1) % dimensions[1] : i1;
-          const index_t i2pmu = mu == 2 ? (i2 + 1) % dimensions[2] : i2;
-          const index_t i3pmu = mu == 3 ? (i3 + 1) % dimensions[3] : i3;
-          // positive directions
-          #pragma unroll
-          for(index_t nu = 0; nu < Nd; ++nu) { // loop over nu
-            // do nothing for mu = nu
-            if (nu == mu) continue;
-            // get the x + nu indices
-            const index_t i0pnu = nu == 0 ? (i0 + 1) % dimensions[0] : i0;
-            const index_t i1pnu = nu == 1 ? (i1 + 1) % dimensions[1] : i1;
-            const index_t i2pnu = nu == 2 ? (i2 + 1) % dimensions[2] : i2;
-            const index_t i3pnu = nu == 3 ? (i3 + 1) % dimensions[3] : i3;
-            // get the staple
-            temp += g(i0pmu,i1pmu,i2pmu,i3pmu,nu) * conj(g(i0pnu,i1pnu,i2pnu,i3pnu,mu))
-                  * conj(g(i0,i1,i2,i3,nu));
-          } // loop over nu
-          // negative directions
-          #pragma unroll
-          for(index_t nu = 0; nu < Nd; ++nu) { // loop over nu
-            // do nothing for mu = nu
-            if (nu == mu) continue;
-            // get the x + mu - nu indices
-            const index_t i0pmu_mnu = nu == 0 ? (i0pmu - 1 + dimensions[0]) % dimensions[0] : i0pmu;
-            const index_t i1pmu_mnu = nu == 1 ? (i1pmu - 1 + dimensions[1]) % dimensions[1] : i1pmu;
-            const index_t i2pmu_mnu = nu == 2 ? (i2pmu - 1 + dimensions[2]) % dimensions[2] : i2pmu;
-            const index_t i3pmu_mnu = nu == 3 ? (i3pmu - 1 + dimensions[3]) % dimensions[3] : i3pmu;
-            // get the x - nu indices
-            const index_t i0mnu = nu == 0 ? (i0 - 1 + dimensions[0]) % dimensions[0] : i0;
-            const index_t i1mnu = nu == 1 ? (i1 - 1 + dimensions[1]) % dimensions[1] : i1;
-            const index_t i2mnu = nu == 2 ? (i2 - 1 + dimensions[2]) % dimensions[2] : i2;
-            const index_t i3mnu = nu == 3 ? (i3 - 1 + dimensions[3]) % dimensions[3] : i3;
-            // get the staple
-            temp += conj(g(i0pmu_mnu,i1pmu_mnu,i2pmu_mnu,i3pmu_mnu,nu)) 
-                  * conj(g(i0mnu,i1mnu,i2mnu,i3mnu,mu)) * g(i0mnu,i1mnu,i2mnu,i3mnu,nu);
-          } // loop over nu
-          // store the staple in the output field
-          g_out(i0,i1,i2,i3,mu) = temp;
-        } // loop  over mu
-      });
-    Kokkos::fence();
-    // return the output field
-    return constGaugeField<Nd,Nc>(g_out.field);
+  KOKKOS_INLINE_FUNCTION
+  void operator()(index_t i0, index_t i1, index_t i2) {
+    for (index_t mu = 0; mu < 3; ++mu) {
+      a(i0, i1, i2, mu) *= b(i0, i1, i2, mu);
+    }
+  }
+};
+
+template <typename FieldA, typename FieldB>
+struct GaugeFieldMultFunctor<4, FieldA, FieldB> {
+  FieldA a;
+  FieldB b;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator()(index_t i0, index_t i1, index_t i2, index_t i3) {
+    for (index_t mu = 0; mu < 4; ++mu) {
+      a(i0, i1, i2, i3, mu) *= b(i0, i1, i2, i3, mu);
+    }
+  }
+};
+
+// TODO: fix the multiplication operators
+//
+// define multiplication between GaugeFields for now only define *= operators,
+// as I have yet to decide on a heuristic for the output type when mixing
+// different GaugeFieldKinds
+// KOKKOS_FORCEINLINE_FUNCTION
+// template <typename DGaugeFieldType1, typename DGaugeFieldType2>
+// typename DGaugeFieldType1::type &
+// operator*=(typename DGaugeFieldType1::type &a,
+//            typename DGaugeFieldType2::type const &b) {
+//   tune_and_launch_for<Nd>(
+//       "operator*=DeviceGaugeFieldType<Nd, Nc, "
+//       "k1>::type*DeviceGaugeFieldType<Nd, Nc, k2>::type",
+//       IndexArray<Nd>{0}, a.dimensions,
+//       KOKKOS_LAMBDA(index_t i0, index_t i1, index_t i2, index_t i3) {
+// #pragma unroll
+//         for (index_t mu = 0; mu < Nd; ++mu) {
+//           a.field(i0, i1, i2, i3, mu) *= b(i0, i1, i2, i3, mu);
+//         }
+//       });
+//   return a;
+// }
+
+// template<size_t Nd, size_t Nc, GaugeFieldKind k>
+// GaugeField<Nd, Nc>& operator*=(GaugeField<Nd, Nc> &a,
+//   typename DeviceGaugeFieldType<Nd, Nc, k>::type const &b){
+//   assert(a.layout() == b.field.layout());
+//   assert(a.memory_space == b.field.memory_space); //only allow device-device
+//   and host-host operations
+//   tune_and_launch_for<Nd>("operator*=GaugeField*DeviceGaugeFieldType<Nd, Nc,
+//   k>::type",IndexArray<Nd>{0}, a.dimensions,
+//     KOKKOS_LAMBDA(index_t i0, index_t i1, index_t i2, index_t i3){
+//       #pragma unroll
+//       for (index_t mu = 0;mu<Nd;++mu){
+//         a(i0, i1, i2, i3, mu) *= b(i0, i1, i2, i3, mu);
+//       }
+//     });
+//   return a;
+// }
+//
+// template<size_t Nd, size_t Nc, GaugeFieldKind k>
+// typename DeviceGaugeFieldType<Nd, Nc, k>::type& operator*=(
+//   typename DeviceGaugeFieldType<Nd, Nc, k>::type &a,
+//   GaugeField<Nd, Nc> const &b){
+//   assert(a.field.layout() == b.layout());
+//   assert(a.field.memory_space == b.memory_space); //only allow device-device
+//   and host-host operations
+//   tune_and_launch_for<Nd>("operator*=DeviceGaugeFieldType<Nd, Nc,
+//   k>::type*GaugeField",IndexArray<Nd>{0}, a.dimensions,
+//     KOKKOS_LAMBDA(index_t i0, index_t i1, index_t i2, index_t i3){
+//       #pragma unroll
+//       for (index_t mu = 0;mu<Nd;++mu){
+//         a.field(i0, i1, i2, i3, mu) *= b(i0, i1, i2, i3, mu);
+//       }
+//     });
+//   return a;
+// }
+//
+// template<size_t Nd, size_t Nc, GaugeFieldKind k>
+// typename DeviceGaugeFieldType<Nd, Nc, k>::type& operator*=(
+//   typename DeviceGaugeFieldType<Nd, Nc, k>::type &a,
+//   constGaugeField<Nd, Nc> const &b){
+//   assert(a.field.layout() == b.layout());
+//   assert(a.field.memory_space == b.memory_space); //only allow device-device
+//   and host-host operations
+//   tune_and_launch_for<Nd>("operator*=DeviceGaugeFieldType<Nd, Nc,
+//   k>::type*constGaugeField",IndexArray<Nd>{0}, a.dimensions,
+//     KOKKOS_LAMBDA(index_t i0, index_t i1, index_t i2, index_t i3){
+//       #pragma unroll
+//     for (index_t mu = 0;mu<Nd;++mu){
+//         a.field(i0, i1, i2, i3, mu) *= b(i0, i1, i2, i3, mu);
+//       }
+//     });
+//   return a;
+// }
+// // should the multiplication between GaugeField<...> types also be defined?
+//
+// // now define the multiplication with scalars
+// template<size_t Nd, size_t Nc, GaugeFieldKind K1>
+// typename DeviceGaugeFieldType<Nd, Nc, K1>::type&
+// operator*=(
+//   typename DeviceGaugeFieldType<Nd, Nc, K1>::type &a,
+//   real_t const b){
+//   tune_and_launch_for<Nd>("operator*=DeviceGaugeFieldType<Nd, Nc,
+//   k1>::type*Scalar",IndexArray<Nd>{0}, a.dimensions, KOKKOS_LAMBDA(index_t
+//   i0, index_t i1, index_t i2, index_t i3){
+//     #pragma unroll
+//     for (index_t mu = 0;mu<Nd;++mu){
+//       a.field(i0, i1, i2, i3, mu) *= b;
+//     }
+//   });
+//   return a;
+// }
+
+// template <size_t Nd, size_t Nc>
+// GaugeField<Nd, Nc> &operator*=(GaugeField<Nd, Nc> &a, real_t const b) {
+//   tune_and_launch_for<Nd>(
+//       "operator*=GaugeField*Scalar", IndexArray<Nd>{0}, a.dimensions,
+//       KOKKOS_LAMBDA(index_t i0, index_t i1, index_t i2, index_t i3) {
+// #pragma unroll
+//         for (index_t mu = 0; mu < Nd; ++mu) {
+//           a(i0, i1, i2, i3, mu) *= b;
+//         }
+//       });
+//   return a;
+// }
+
+// // function to conjugate a given DeviceGaugeField in place.
+// template <size_t Nd, size_t Nc, GaugeFieldKind K = GaugeFieldKind::Standard>
+// void conj_field(typename DeviceGaugeFieldType<Nd, Nc, K>::type &field) {
+//   tune_and_launch_for<Nd>(
+//       "conj_field", IndexArray<Nd>{0}, field.dimensions,
+//       KOKKOS_LAMBDA(index_t i0, index_t i1, index_t i2, index_t i3) {
+// #pragma unroll
+//         for (index_t mu = 0; mu < Nd; ++mu) {
+//           field.field(i0, i1, i2, i3, mu) = conj(field(i0, i1, i2, i3, mu));
+//         }
+//       });
+//   Kokkos::fence();
+// }
+//
+
+// calculate staple per site and store in another gauge
+template <typename DGaugeFieldType>
+auto stapleField(const typename DGaugeFieldType::type &g_in)
+    -> ConstGaugeFieldType<DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Rank,
+                           DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Nc> {
+  // initialize the output field
+  static_assert(isDeviceGaugeFieldType<DGaugeFieldType>::value);
+  constexpr static size_t Nd =
+      DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Rank;
+  constexpr static size_t Nc = DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Nc;
+
+  typename DGaugeFieldType::type g_out(g_in.field);
+
+  // get the start and end indices
+  const auto &dimensions = g_in.field.layout().dimension;
+  IndexArray<Nd> start;
+  IndexArray<Nd> end;
+  for (index_t i = 0; i < Nd; ++i) {
+    start[i] = 0;
+    end[i] = dimensions[i];
   }
 
+  // It would be trivial to add a stapleField return into each
+  // DeviceGaugeFieldType, though as already done with .staple, shouldn't the
+  // definition and calculations be seperated?
+  if constexpr (Nd == 4) {
+    tune_and_launch_for<4>(
+        "stapleField_GaugeField", start, end,
+        KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2,
+                      const index_t i3) {
+          for (index_t mu = 0; mu < Nd; ++mu) {
+            g_out.field(i0, i1, i2, i3, mu) =
+                g_in.staple(IndexArray<4>{i0, i1, i2, i3}, mu);
+          }
+        });
+  } else if constexpr (Nd == 3) {
+    tune_and_launch_for<3>(
+        "stapleField_GaugeField3D", start, end,
+        KOKKOS_LAMBDA(const index_t i0, const index_t i1, const index_t i2) {
+          for (index_t mu = 0; mu < Nd; ++mu) {
+            g_out.field(i0, i1, i2, mu) =
+                g_in.staple(IndexArray<3>{i0, i1, i2}, mu);
+          }
+        });
+  } else if constexpr (Nd == 2) {
+    tune_and_launch_for<2>(
+        "stapleField_GaugeField3D", start, end,
+        KOKKOS_LAMBDA(const index_t i0, const index_t i1) {
+          for (index_t mu = 0; mu < Nd; ++mu) {
+            g_out.field(i0, i1, mu) = g_in.staple(IndexArray<2>{i0, i1}, mu);
+          }
+        });
+  } else {
+    static_assert(Nd == 2 || Nd == 3 || Nd == 4, "Unsupported Nd");
+  }
+
+  Kokkos::fence();
+  // return the output field
+  return ConstGaugeFieldType<Nd, Nc>(g_out.field);
 }
+
+} // namespace klft

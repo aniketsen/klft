@@ -1,64 +1,77 @@
 #pragma once
+#include "FieldTypeHelper.hpp"
 #include "GLOBAL.hpp"
-#include "GaugeField.hpp"
-#include "AdjointField.hpp"
+#include "Kokkos_Macros.hpp"
+#include "decl/Kokkos_Declare_OPENMP.hpp"
+#include "impl/Kokkos_Profiling.hpp"
 
 namespace klft {
 
-  template<typename T, class Group, class Adjoint, int Ndim = 4, int Nc = 3>
-  class HamiltonianField {
-  public:
-    struct update_momentum_s {};
-    struct update_gauge_s {};
-    GaugeField<T,Group,Ndim,Nc> gauge_field;
-    AdjointField<T,Adjoint,Ndim,Nc> adjoint_field;
+template <typename DGaugeFieldType, typename DAdjFieldType>
+struct HamiltonianField {
+  // template argument deduction and safety
+  static_assert(isDeviceGaugeFieldType<DGaugeFieldType>::value);
+  static_assert(isDeviceAdjFieldType<DAdjFieldType>::value);
+  constexpr static size_t rank =
+      DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Rank;
+  constexpr static size_t Nc = DeviceGaugeFieldTypeTraits<DGaugeFieldType>::Nc;
+  static_assert((rank == DeviceAdjFieldTypeTraits<DAdjFieldType>::Rank) &&
+                (Nc == DeviceAdjFieldTypeTraits<DAdjFieldType>::Nc));
 
-    typedef T value_type;
-    
-    HamiltonianField() = default;
+  using GaugeField = typename DGaugeFieldType::type;
+  using AdjointField = typename DAdjFieldType::type;
 
-    HamiltonianField(const GaugeField<T,Group,Ndim,Nc> _gauge_field, const AdjointField<T,Adjoint,Ndim,Nc> _adjoint_field) :
-      gauge_field(_gauge_field), adjoint_field(_adjoint_field) {}
-    
-    void update_momentum(AdjointField<T,Adjoint,Ndim,Nc> deriv, const T dtau) {
-      auto BulkPolicy = Kokkos::MDRangePolicy<Kokkos::Rank<5>>({0,0,0,0,0},{adjoint_field.get_max_dim(0),adjoint_field.get_max_dim(1),adjoint_field.get_max_dim(2),adjoint_field.get_max_dim(3),adjoint_field.get_Ndim()});
-      Kokkos::parallel_for("update_momentum", BulkPolicy, KOKKOS_CLASS_LAMBDA(const int x, const int y, const int z, const int t, const int mu) {
-        Adjoint tmp = adjoint_field.get_adjoint(x,y,z,t,mu);
-        tmp -= dtau*deriv.get_adjoint(x,y,z,t,mu);
-        adjoint_field.set_adjoint(x,y,z,t,mu,tmp);
-      });
+  GaugeField &gauge_field;
+  AdjointField &adjoint_field;
+  struct EKin {};
+
+  HamiltonianField() = delete;
+
+  HamiltonianField(GaugeField &_gauge_field, AdjointField &_adjoint_field)
+      : gauge_field(_gauge_field), adjoint_field(_adjoint_field) {}
+
+  // Rank-4 version
+  KOKKOS_INLINE_FUNCTION void operator()(EKin, index_t i0, index_t i1,
+                                         index_t i2, index_t i3,
+                                         real_t &rtn) const {
+    real_t tmp = 0.0;
+    for (index_t mu = 0; mu < 4; ++mu) {
+      tmp += 0.5 * norm2<Nc>(adjoint_field(i0, i1, i2, i3, mu));
     }
+    rtn += tmp;
+  }
 
-    void update_gauge(const T dtau) {
-      auto BulkPolicy = Kokkos::MDRangePolicy<Kokkos::Rank<5>>({0,0,0,0,0},{gauge_field.get_max_dim(0),gauge_field.get_max_dim(1),gauge_field.get_max_dim(2),gauge_field.get_max_dim(3),gauge_field.get_Ndim()});
-      Kokkos::parallel_for("update_gauge", BulkPolicy, KOKKOS_CLASS_LAMBDA(const int x, const int y, const int z, const int t, const int mu) {
-        Group U = exp(dtau*adjoint_field.get_adjoint(x,y,z,t,mu))*gauge_field.get_link(x,y,z,t,mu);
-        gauge_field.set_link(x,y,z,t,mu,U);
-      });
+  // Rank-3 version
+  KOKKOS_INLINE_FUNCTION void operator()(EKin, index_t i0, index_t i1,
+                                         index_t i2, real_t &rtn) const {
+    real_t tmp = 0.0;
+    for (index_t mu = 0; mu < 3; ++mu) {
+      tmp += 0.5 * norm2<Nc>(adjoint_field(i0, i1, i2, mu));
     }
+    rtn += tmp;
+  }
 
-    T kinetic_energy() {
-      T kinetic_energy = 0.0;
-      auto BulkPolicy = Kokkos::MDRangePolicy<Kokkos::Rank<5>>({0,0,0,0,0},{adjoint_field.get_max_dim(0),adjoint_field.get_max_dim(1),adjoint_field.get_max_dim(2),adjoint_field.get_max_dim(3),adjoint_field.get_Ndim()});
-      Kokkos::parallel_reduce("kinetic_energy", BulkPolicy, KOKKOS_CLASS_LAMBDA(const int x, const int y, const int z, const int t, const int mu, T &local_sum) {
-        Adjoint tmp = adjoint_field.get_adjoint(x,y,z,t,mu);
-        local_sum += 0.5*tmp.norm2();
-      }, kinetic_energy);
-      return kinetic_energy;
+  // Rank-2 version
+  KOKKOS_INLINE_FUNCTION void operator()(EKin, index_t i0, index_t i1,
+                                         real_t &rtn) const {
+    real_t tmp = 0.0;
+    for (index_t mu = 0; mu < 2; ++mu) {
+      tmp += 0.5 * norm2<Nc>(adjoint_field(i0, i1, mu));
     }
+    rtn += tmp;
+  }
 
-    template <class RNG>
-    void randomize_momentum(RNG rng) {
-      auto BulkPolicy = Kokkos::MDRangePolicy<Kokkos::Rank<5>>({0,0,0,0,0},{adjoint_field.get_max_dim(0),adjoint_field.get_max_dim(1),adjoint_field.get_max_dim(2),adjoint_field.get_max_dim(3),adjoint_field.get_Ndim()});
-      Kokkos::parallel_for("randomize_momentum", BulkPolicy, KOKKOS_CLASS_LAMBDA(const int x, const int y, const int z, const int t, const int mu) {
-        auto generator = rng.get_state();
-        Adjoint U;
-        U.get_random(generator);
-        adjoint_field.set_adjoint(x,y,z,t,mu,U);
-        rng.free_state(generator);
-      });
-    }
+  real_t kinetic_energy() {
+    real_t kinetic_energy = 0.0;
+    auto rp = Kokkos::MDRangePolicy<EKin, Kokkos::Rank<this->rank>>(
+        IndexArray<this->rank>{0}, this->adjoint_field.dimensions);
+    Kokkos::parallel_reduce("kinetic_energy", rp, *this, kinetic_energy);
+    return kinetic_energy;
+  }
 
-  };
+  template <class RNG> void randomize_momentum(RNG &rng) {
+    adjoint_field.template randomize_field<RNG>(rng);
+  }
+};
 
 } // namespace klft

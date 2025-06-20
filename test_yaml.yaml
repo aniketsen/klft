@@ -1,0 +1,51 @@
+MetropolisParams:
+  Ndims: 4
+  L0: 32
+  L1: 32
+  L2: 32
+  L3: 32
+  nHits: 10
+  nSweep: 1000
+  seed: 1234
+  Nd: 4
+  Nc: 2
+  beta: 1.0
+  delta: 0.1
+
+HMCParams:
+  Ndims: 3
+  L0: 12
+  L1: 12
+  L2: 12
+  L3: 12
+  tau: 1.0
+  seed: 1234
+  nsteps: 20 
+  nstepsGauge: 100
+  Nd: 3
+  Nc: 2
+  beta: 4.0
+
+GaugeObservableParams:
+  measurement_interval: 10
+  measure_plaquette: true
+  measure_wilson_loop_temporal: false
+  measure_wilson_loop_mu_nu: false
+
+  W_temp_L_T_pairs:
+    - [2, 3]
+    - [3, 4]
+
+  W_mu_nu_pairs:
+    - [0, 1]
+    - [1, 2]
+
+  W_Lmu_Lnu_pairs:
+    - [2, 2]
+    - [3, 3]
+
+  plaquette_filename: "plaquette_output.txt"
+  W_temp_filename: "wilson_temp_output.txt"
+  W_mu_nu_filename: "wilson_mu_nu_output.txt"
+
+  write_to_file: false
