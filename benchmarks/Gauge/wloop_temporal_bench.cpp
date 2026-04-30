@@ -23,25 +23,28 @@
 #include "WilsonLoop.hpp"
 #include <getopt.h>
 
-#define HLINE "====================================================================\n"
+#define HLINE                                                                  \
+  "====================================================================\n"
 
 using namespace klft;
 
 int run_benchmark(const size_t stream_size_array) {
   // get verbosity from environment
-  const int verbosity = std::getenv("KLFT_VERBOSITY") ?
-                        std::atoi(std::getenv("KLFT_VERBOSITY")) : 0;
+  const int verbosity = std::getenv("KLFT_VERBOSITY")
+                            ? std::atoi(std::getenv("KLFT_VERBOSITY"))
+                            : 0;
   setVerbosity(verbosity);
   // get tuning from environment
-  const int tuning = std::getenv("KLFT_TUNING") ?
-                     std::atoi(std::getenv("KLFT_TUNING")) : 0;
+  const int tuning =
+      std::getenv("KLFT_TUNING") ? std::atoi(std::getenv("KLFT_TUNING")) : 0;
   setTuning(tuning);
   // 4D volume of the gauge fields
-  const real_t volume4D = (real_t)stream_size_array * (real_t)stream_size_array *
-                        (real_t)stream_size_array * (real_t)stream_size_array;
+  const real_t volume4D = (real_t)stream_size_array *
+                          (real_t)stream_size_array *
+                          (real_t)stream_size_array * (real_t)stream_size_array;
   // 3D volume of the gauge fields
-  const real_t volume3D = (real_t)stream_size_array * (real_t)stream_size_array *
-                        (real_t)stream_size_array;
+  const real_t volume3D = (real_t)stream_size_array *
+                          (real_t)stream_size_array * (real_t)stream_size_array;
   // 2D volume of the gauge fields
   const real_t volume2D = (real_t)stream_size_array * (real_t)stream_size_array;
 
@@ -56,13 +59,16 @@ int run_benchmark(const size_t stream_size_array) {
          STREAM_NTIMES);
   printf("Reports fastest timing per kernel\n");
   std::vector<Kokkos::Array<index_t, 2>> LT_pairs;
-  LT_pairs.push_back({index_t(stream_size_array/4), index_t(stream_size_array/4)});
-  LT_pairs.push_back({index_t(stream_size_array/2), index_t(stream_size_array/4)});
-  LT_pairs.push_back({index_t(stream_size_array/2), index_t(stream_size_array/2)});  
+  LT_pairs.push_back(
+      {index_t(stream_size_array / 4), index_t(stream_size_array / 4)});
+  LT_pairs.push_back(
+      {index_t(stream_size_array / 2), index_t(stream_size_array / 4)});
+  LT_pairs.push_back(
+      {index_t(stream_size_array / 2), index_t(stream_size_array / 2)});
   printf("Lattice extent: %ld\n", stream_size_array);
   printf("Wilson Loop pairs: \n");
   for (const auto &pair : LT_pairs) {
-    printf("L = %ld, T = %ld\n", pair[0], pair[1]);
+    printf("L = %d, T = %d\n", pair[0], pair[1]);
   }
   printf(HLINE);
   // output vector
@@ -75,33 +81,34 @@ int run_benchmark(const size_t stream_size_array) {
          1.0e-6 * U1_gauge_4D * (real_t)sizeof(complex_t));
   printf(HLINE);
   printf("Initializing Gauge...\n");
-  
+
   {
-  deviceGaugeField<4, 1> dev_g_U1_4D(stream_size_array, stream_size_array,
+    deviceGaugeField<4, 1> dev_g_U1_4D(stream_size_array, stream_size_array,
                                        stream_size_array, stream_size_array,
                                        identitySUN<1>());
 
-  printf("Running benchmark...\n");
+    printf("Running benchmark...\n");
 
-  // run the benchmark
-  for (index_t k = 0; k < STREAM_NTIMES; ++k) {
-    Wtemporal_vals.clear();
-    timer.reset();
-    WilsonLoop_temporal<4, 1>(dev_g_U1_4D, LT_pairs, Wtemporal_vals);
-    Kokkos::fence();
-    wlTime = std::min(wlTime, timer.seconds());
-  }
+    // run the benchmark
+    for (index_t k = 0; k < STREAM_NTIMES; ++k) {
+      Wtemporal_vals.clear();
+      timer.reset();
+      WilsonLoop_temporal<4, 1>(dev_g_U1_4D, LT_pairs, Wtemporal_vals);
+      Kokkos::fence();
+      wlTime = std::min(wlTime, timer.seconds());
+    }
   }
   printf(HLINE);
   printf("Wilson Loop values: \n");
   for (const auto &Wtemporal : Wtemporal_vals) {
     printf("L = %d, T = %d, W(L,T) = %11.4e            Expected: %11.4e\n",
-           static_cast<index_t>(Wtemporal[0]), static_cast<index_t>(Wtemporal[1]), Wtemporal[2], 1.0);
+           static_cast<index_t>(Wtemporal[0]),
+           static_cast<index_t>(Wtemporal[1]), Wtemporal[2], 1.0);
   }
   printf("Wilson Loop Kernel Time:     %11.4e s\n", wlTime);
   printf("Wilson Loop BW:              %11.4f GB/s\n",
-         1.0e-9 * (real_t)sizeof(complex_t) * (volume4D + 2.0 * U1_field_4D + U1_gauge_4D) /
-         wlTime);
+         1.0e-9 * (real_t)sizeof(complex_t) *
+             (volume4D + 2.0 * U1_field_4D + U1_gauge_4D) / wlTime);
   printf(HLINE);
 
   // reset plaquette time
@@ -114,33 +121,34 @@ int run_benchmark(const size_t stream_size_array) {
          1.0e-6 * SU2_gauge_4D * (real_t)sizeof(complex_t));
   printf(HLINE);
   printf("Initializing Gauge...\n");
-  
+
   {
-  deviceGaugeField<4, 2> dev_g_SU2_4D(stream_size_array, stream_size_array,
+    deviceGaugeField<4, 2> dev_g_SU2_4D(stream_size_array, stream_size_array,
                                         stream_size_array, stream_size_array,
                                         identitySUN<2>());
 
-  printf("Running benchmark...\n");
+    printf("Running benchmark...\n");
 
-  // run the benchmark
-  for (index_t k = 0; k < STREAM_NTIMES; ++k) {
-    Wtemporal_vals.clear();
-    timer.reset();
-    WilsonLoop_temporal<4, 2>(dev_g_SU2_4D, LT_pairs, Wtemporal_vals);
-    Kokkos::fence();
-    wlTime = std::min(wlTime, timer.seconds());
-  }
+    // run the benchmark
+    for (index_t k = 0; k < STREAM_NTIMES; ++k) {
+      Wtemporal_vals.clear();
+      timer.reset();
+      WilsonLoop_temporal<4, 2>(dev_g_SU2_4D, LT_pairs, Wtemporal_vals);
+      Kokkos::fence();
+      wlTime = std::min(wlTime, timer.seconds());
+    }
   }
   printf(HLINE);
   printf("Wilson Loop values: \n");
   for (const auto &Wtemporal : Wtemporal_vals) {
     printf("L = %d, T = %d, W(L,T) = %11.4e            Expected: %11.4e\n",
-           static_cast<index_t>(Wtemporal[0]), static_cast<index_t>(Wtemporal[1]), Wtemporal[2], 1.0);
+           static_cast<index_t>(Wtemporal[0]),
+           static_cast<index_t>(Wtemporal[1]), Wtemporal[2], 1.0);
   }
   printf("Wilson Loop Kernel Time:     %11.4e s\n", wlTime);
   printf("Wilson Loop BW:              %11.4f GB/s\n",
-         1.0e-9 * (real_t)sizeof(complex_t) * (volume4D + 2.0 * SU2_field_4D + SU2_gauge_4D) /
-         wlTime);
+         1.0e-9 * (real_t)sizeof(complex_t) *
+             (volume4D + 2.0 * SU2_field_4D + SU2_gauge_4D) / wlTime);
   printf(HLINE);
 
   // reset plaquette time
@@ -153,33 +161,34 @@ int run_benchmark(const size_t stream_size_array) {
          1.0e-6 * SU3_gauge_4D * (real_t)sizeof(complex_t));
   printf(HLINE);
   printf("Initializing Gauge...\n");
-  
+
   {
-  deviceGaugeField<4, 3> dev_g_SU3_4D(stream_size_array, stream_size_array,
+    deviceGaugeField<4, 3> dev_g_SU3_4D(stream_size_array, stream_size_array,
                                         stream_size_array, stream_size_array,
                                         identitySUN<3>());
-  
-  printf("Running benchmark...\n");
 
-  // run the benchmark
-  for (index_t k = 0; k < STREAM_NTIMES; ++k) {
-    Wtemporal_vals.clear();
-    timer.reset();
-    WilsonLoop_temporal<4, 3>(dev_g_SU3_4D, LT_pairs, Wtemporal_vals);
-    Kokkos::fence();
-    wlTime = std::min(wlTime, timer.seconds());
-  }
+    printf("Running benchmark...\n");
+
+    // run the benchmark
+    for (index_t k = 0; k < STREAM_NTIMES; ++k) {
+      Wtemporal_vals.clear();
+      timer.reset();
+      WilsonLoop_temporal<4, 3>(dev_g_SU3_4D, LT_pairs, Wtemporal_vals);
+      Kokkos::fence();
+      wlTime = std::min(wlTime, timer.seconds());
+    }
   }
   printf(HLINE);
   printf("Wilson Loop values: \n");
   for (const auto &Wtemporal : Wtemporal_vals) {
     printf("L = %d, T = %d, W(L,T) = %11.4e            Expected: %11.4e\n",
-           static_cast<index_t>(Wtemporal[0]), static_cast<index_t>(Wtemporal[1]), Wtemporal[2], 1.0);
+           static_cast<index_t>(Wtemporal[0]),
+           static_cast<index_t>(Wtemporal[1]), Wtemporal[2], 1.0);
   }
   printf("Wilson Loop Kernel Time:     %11.4e s\n", wlTime);
   printf("Wilson Loop BW:              %11.4f GB/s\n",
-         1.0e-9 * (real_t)sizeof(complex_t) * (volume4D + 2.0 * SU3_field_4D + SU3_gauge_4D) /
-         wlTime);
+         1.0e-9 * (real_t)sizeof(complex_t) *
+             (volume4D + 2.0 * SU3_field_4D + SU3_gauge_4D) / wlTime);
   printf(HLINE);
 
   // reset plaquette time
@@ -192,32 +201,33 @@ int run_benchmark(const size_t stream_size_array) {
          1.0e-6 * U1_gauge_3D * (real_t)sizeof(complex_t));
   printf(HLINE);
   printf("Initializing Gauge...\n");
-  
+
   {
-  deviceGaugeField3D<3, 1> dev_g_U1_3D(stream_size_array, stream_size_array,
-                                       stream_size_array, identitySUN<1>());
+    deviceGaugeField3D<3, 1> dev_g_U1_3D(stream_size_array, stream_size_array,
+                                         stream_size_array, identitySUN<1>());
 
-  printf("Running benchmark...\n");
+    printf("Running benchmark...\n");
 
-  // run the benchmark
-  for (index_t k = 0; k < STREAM_NTIMES; ++k) {
-    Wtemporal_vals.clear();
-    timer.reset();
-    WilsonLoop_temporal<3, 1>(dev_g_U1_3D, LT_pairs, Wtemporal_vals);
-    Kokkos::fence();
-    wlTime = std::min(wlTime, timer.seconds());
-  }
+    // run the benchmark
+    for (index_t k = 0; k < STREAM_NTIMES; ++k) {
+      Wtemporal_vals.clear();
+      timer.reset();
+      WilsonLoop_temporal<3, 1>(dev_g_U1_3D, LT_pairs, Wtemporal_vals);
+      Kokkos::fence();
+      wlTime = std::min(wlTime, timer.seconds());
+    }
   }
   printf(HLINE);
   printf("Wilson Loop values: \n");
   for (const auto &Wtemporal : Wtemporal_vals) {
     printf("L = %d, T = %d, W(L,T) = %11.4e            Expected: %11.4e\n",
-           static_cast<index_t>(Wtemporal[0]), static_cast<index_t>(Wtemporal[1]), Wtemporal[2], 1.0);
+           static_cast<index_t>(Wtemporal[0]),
+           static_cast<index_t>(Wtemporal[1]), Wtemporal[2], 1.0);
   }
   printf("Wilson Loop Kernel Time:     %11.4e s\n", wlTime);
   printf("Wilson Loop BW:              %11.4f GB/s\n",
-         1.0e-9 * (real_t)sizeof(complex_t) * (volume3D + 2.0 * U1_field_3D + U1_gauge_3D) /
-         wlTime);
+         1.0e-9 * (real_t)sizeof(complex_t) *
+             (volume3D + 2.0 * U1_field_3D + U1_gauge_3D) / wlTime);
   printf(HLINE);
 
   // reset plaquette time
@@ -230,32 +240,33 @@ int run_benchmark(const size_t stream_size_array) {
          1.0e-6 * SU2_gauge_3D * (real_t)sizeof(complex_t));
   printf(HLINE);
   printf("Initializing Gauge...\n");
-  
-  {
-  deviceGaugeField3D<3, 2> dev_g_SU2_3D(stream_size_array, stream_size_array,
-                                        stream_size_array, identitySUN<2>());
-  
-  printf("Running benchmark...\n");
 
-  // run the benchmark
-  for (index_t k = 0; k < STREAM_NTIMES; ++k) {
-    Wtemporal_vals.clear();
-    timer.reset();
-    WilsonLoop_temporal<3, 2>(dev_g_SU2_3D, LT_pairs, Wtemporal_vals);
-    Kokkos::fence();
-    wlTime = std::min(wlTime, timer.seconds());
-  }
+  {
+    deviceGaugeField3D<3, 2> dev_g_SU2_3D(stream_size_array, stream_size_array,
+                                          stream_size_array, identitySUN<2>());
+
+    printf("Running benchmark...\n");
+
+    // run the benchmark
+    for (index_t k = 0; k < STREAM_NTIMES; ++k) {
+      Wtemporal_vals.clear();
+      timer.reset();
+      WilsonLoop_temporal<3, 2>(dev_g_SU2_3D, LT_pairs, Wtemporal_vals);
+      Kokkos::fence();
+      wlTime = std::min(wlTime, timer.seconds());
+    }
   }
   printf(HLINE);
   printf("Wilson Loop values: \n");
   for (const auto &Wtemporal : Wtemporal_vals) {
     printf("L = %d, T = %d, W(L,T) = %11.4e            Expected: %11.4e\n",
-           static_cast<index_t>(Wtemporal[0]), static_cast<index_t>(Wtemporal[1]), Wtemporal[2], 1.0);
+           static_cast<index_t>(Wtemporal[0]),
+           static_cast<index_t>(Wtemporal[1]), Wtemporal[2], 1.0);
   }
   printf("Wilson Loop Kernel Time:     %11.4e s\n", wlTime);
   printf("Wilson Loop BW:              %11.4f GB/s\n",
-         1.0e-9 * (real_t)sizeof(complex_t) * (volume3D + 2.0 * SU2_field_3D + SU2_gauge_3D) /
-         wlTime);
+         1.0e-9 * (real_t)sizeof(complex_t) *
+             (volume3D + 2.0 * SU2_field_3D + SU2_gauge_3D) / wlTime);
   printf(HLINE);
 
   // reset plaquette time
@@ -268,32 +279,33 @@ int run_benchmark(const size_t stream_size_array) {
          1.0e-6 * SU3_gauge_3D * (real_t)sizeof(complex_t));
   printf(HLINE);
   printf("Initializing Gauge...\n");
-  
-  {
-  deviceGaugeField3D<3, 3> dev_g_SU3_3D(stream_size_array, stream_size_array,
-                                        stream_size_array, identitySUN<3>());
-  
-  printf("Running benchmark...\n");
 
-  // run the benchmark
-  for (index_t k = 0; k < STREAM_NTIMES; ++k) {
-    Wtemporal_vals.clear();
-    timer.reset();
-    WilsonLoop_temporal<3, 3>(dev_g_SU3_3D, LT_pairs, Wtemporal_vals);
-    Kokkos::fence();
-    wlTime = std::min(wlTime, timer.seconds());
-  }
+  {
+    deviceGaugeField3D<3, 3> dev_g_SU3_3D(stream_size_array, stream_size_array,
+                                          stream_size_array, identitySUN<3>());
+
+    printf("Running benchmark...\n");
+
+    // run the benchmark
+    for (index_t k = 0; k < STREAM_NTIMES; ++k) {
+      Wtemporal_vals.clear();
+      timer.reset();
+      WilsonLoop_temporal<3, 3>(dev_g_SU3_3D, LT_pairs, Wtemporal_vals);
+      Kokkos::fence();
+      wlTime = std::min(wlTime, timer.seconds());
+    }
   }
   printf(HLINE);
   printf("Wilson Loop values: \n");
   for (const auto &Wtemporal : Wtemporal_vals) {
     printf("L = %d, T = %d, W(L,T) = %11.4e            Expected: %11.4e\n",
-           static_cast<index_t>(Wtemporal[0]), static_cast<index_t>(Wtemporal[1]), Wtemporal[2], 1.0);
+           static_cast<index_t>(Wtemporal[0]),
+           static_cast<index_t>(Wtemporal[1]), Wtemporal[2], 1.0);
   }
   printf("Wilson Loop Kernel Time:     %11.4e s\n", wlTime);
   printf("Wilson Loop BW:              %11.4f GB/s\n",
-         1.0e-9 * (real_t)sizeof(complex_t) * (volume3D + 2.0 * SU3_field_3D + SU3_gauge_3D) /
-         wlTime);
+         1.0e-9 * (real_t)sizeof(complex_t) *
+             (volume3D + 2.0 * SU3_field_3D + SU3_gauge_3D) / wlTime);
   printf(HLINE);
 
   // reset plaquette time
@@ -306,32 +318,33 @@ int run_benchmark(const size_t stream_size_array) {
          1.0e-6 * U1_gauge_2D * (real_t)sizeof(complex_t));
   printf(HLINE);
   printf("Initializing Gauge...\n");
-  
+
   {
-  deviceGaugeField2D<2, 1> dev_g_U1_2D(stream_size_array, stream_size_array,
-                                       identitySUN<1>());
+    deviceGaugeField2D<2, 1> dev_g_U1_2D(stream_size_array, stream_size_array,
+                                         identitySUN<1>());
 
-  printf("Running benchmark...\n");
+    printf("Running benchmark...\n");
 
-  // run the benchmark
-  for (index_t k = 0; k < STREAM_NTIMES; ++k) {
-    Wtemporal_vals.clear();
-    timer.reset();
-    WilsonLoop_temporal<2, 1>(dev_g_U1_2D, LT_pairs, Wtemporal_vals);
-    Kokkos::fence();
-    wlTime = std::min(wlTime, timer.seconds());
-  }
+    // run the benchmark
+    for (index_t k = 0; k < STREAM_NTIMES; ++k) {
+      Wtemporal_vals.clear();
+      timer.reset();
+      WilsonLoop_temporal<2, 1>(dev_g_U1_2D, LT_pairs, Wtemporal_vals);
+      Kokkos::fence();
+      wlTime = std::min(wlTime, timer.seconds());
+    }
   }
   printf(HLINE);
   printf("Wilson Loop values: \n");
   for (const auto &Wtemporal : Wtemporal_vals) {
     printf("L = %d, T = %d, W(L,T) = %11.4e            Expected: %11.4e\n",
-           static_cast<index_t>(Wtemporal[0]), static_cast<index_t>(Wtemporal[1]), Wtemporal[2], 1.0);
+           static_cast<index_t>(Wtemporal[0]),
+           static_cast<index_t>(Wtemporal[1]), Wtemporal[2], 1.0);
   }
   printf("Wilson Loop Kernel Time:     %11.4e s\n", wlTime);
   printf("Wilson Loop BW:              %11.4f GB/s\n",
-         1.0e-9 * (real_t)sizeof(complex_t) * (volume2D + 2.0 * U1_field_2D + U1_gauge_2D) /
-         wlTime);
+         1.0e-9 * (real_t)sizeof(complex_t) *
+             (volume2D + 2.0 * U1_field_2D + U1_gauge_2D) / wlTime);
   printf(HLINE);
 
   // reset plaquette time
@@ -344,32 +357,33 @@ int run_benchmark(const size_t stream_size_array) {
          1.0e-6 * SU2_gauge_2D * (real_t)sizeof(complex_t));
   printf(HLINE);
   printf("Initializing Gauge...\n");
-  
+
   {
-  deviceGaugeField2D<2, 2> dev_g_SU2_2D(stream_size_array, stream_size_array,
-                                        identitySUN<2>());
+    deviceGaugeField2D<2, 2> dev_g_SU2_2D(stream_size_array, stream_size_array,
+                                          identitySUN<2>());
 
-  printf("Running benchmark...\n");
+    printf("Running benchmark...\n");
 
-  // run the benchmark
-  for (index_t k = 0; k < STREAM_NTIMES; ++k) {
-    Wtemporal_vals.clear();
-    timer.reset();
-    WilsonLoop_temporal<2, 2>(dev_g_SU2_2D, LT_pairs, Wtemporal_vals);
-    Kokkos::fence();
-    wlTime = std::min(wlTime, timer.seconds());
-  }
+    // run the benchmark
+    for (index_t k = 0; k < STREAM_NTIMES; ++k) {
+      Wtemporal_vals.clear();
+      timer.reset();
+      WilsonLoop_temporal<2, 2>(dev_g_SU2_2D, LT_pairs, Wtemporal_vals);
+      Kokkos::fence();
+      wlTime = std::min(wlTime, timer.seconds());
+    }
   }
   printf(HLINE);
   printf("Wilson Loop values: \n");
   for (const auto &Wtemporal : Wtemporal_vals) {
     printf("L = %d, T = %d, W(L,T) = %11.4e            Expected: %11.4e\n",
-           static_cast<index_t>(Wtemporal[0]), static_cast<index_t>(Wtemporal[1]), Wtemporal[2], 1.0);
+           static_cast<index_t>(Wtemporal[0]),
+           static_cast<index_t>(Wtemporal[1]), Wtemporal[2], 1.0);
   }
   printf("Wilson Loop Kernel Time:     %11.4e s\n", wlTime);
   printf("Wilson Loop BW:              %11.4f GB/s\n",
-         1.0e-9 * (real_t)sizeof(complex_t) * (volume2D + 2.0 * SU2_field_2D + SU2_gauge_2D) /
-         wlTime);
+         1.0e-9 * (real_t)sizeof(complex_t) *
+             (volume2D + 2.0 * SU2_field_2D + SU2_gauge_2D) / wlTime);
   printf(HLINE);
 
   // reset plaquette time
@@ -381,32 +395,33 @@ int run_benchmark(const size_t stream_size_array) {
          1.0e-6 * SU3_gauge_2D * (real_t)sizeof(complex_t));
   printf(HLINE);
   printf("Initializing Gauge...\n");
-  
+
   {
-  deviceGaugeField2D<2, 3> dev_g_SU3_2D(stream_size_array, stream_size_array,
-                                        identitySUN<3>());
+    deviceGaugeField2D<2, 3> dev_g_SU3_2D(stream_size_array, stream_size_array,
+                                          identitySUN<3>());
 
-  printf("Running benchmark...\n");
+    printf("Running benchmark...\n");
 
-  // run the benchmark
-  for (index_t k = 0; k < STREAM_NTIMES; ++k) {
-    Wtemporal_vals.clear();
-    timer.reset();
-    WilsonLoop_temporal<2, 3>(dev_g_SU3_2D, LT_pairs, Wtemporal_vals);
-    Kokkos::fence();
-    wlTime = std::min(wlTime, timer.seconds());
-  }
+    // run the benchmark
+    for (index_t k = 0; k < STREAM_NTIMES; ++k) {
+      Wtemporal_vals.clear();
+      timer.reset();
+      WilsonLoop_temporal<2, 3>(dev_g_SU3_2D, LT_pairs, Wtemporal_vals);
+      Kokkos::fence();
+      wlTime = std::min(wlTime, timer.seconds());
+    }
   }
   printf(HLINE);
   printf("Wilson Loop values: \n");
   for (const auto &Wtemporal : Wtemporal_vals) {
     printf("L = %d, T = %d, W(L,T) = %11.4e            Expected: %11.4e\n",
-           static_cast<index_t>(Wtemporal[0]), static_cast<index_t>(Wtemporal[1]), Wtemporal[2], 1.0);
+           static_cast<index_t>(Wtemporal[0]),
+           static_cast<index_t>(Wtemporal[1]), Wtemporal[2], 1.0);
   }
   printf("Wilson Loop Kernel Time:     %11.4e s\n", wlTime);
   printf("Wilson Loop BW:              %11.4f GB/s\n",
-         1.0e-9 * (real_t)sizeof(complex_t) * (volume2D + 2.0 * SU3_field_2D + SU3_gauge_2D) /
-         wlTime);
+         1.0e-9 * (real_t)sizeof(complex_t) *
+             (volume2D + 2.0 * SU3_field_2D + SU3_gauge_2D) / wlTime);
   printf(HLINE);
 
   return 0;
@@ -435,23 +450,27 @@ int parse_args(int argc, char **argv, size_t &stream_array_size) {
   while ((c = getopt_long(argc, argv, "n:h", long_options, &option_index)) !=
          -1)
     switch (c) {
-      case 'n': stream_array_size = atoi(optarg); break;
-      case 'h':
-        printf("%s", help_string.c_str());
-        return -2;
-        break;
-      case 0: break;
-      default:
-        printf("%s", help_string.c_str());
-        return -1;
-        break;
+    case 'n':
+      stream_array_size = atoi(optarg);
+      break;
+    case 'h':
+      printf("%s", help_string.c_str());
+      return -2;
+      break;
+    case 0:
+      break;
+    default:
+      printf("%s", help_string.c_str());
+      return -1;
+      break;
     }
   return 0;
 }
 
 int main(int argc, char *argv[]) {
   printf(HLINE);
-  printf("SU(N) GaugeField 2D, 3D and 4D Wilson Loop kernel test and benchmark\n");
+  printf(
+      "SU(N) GaugeField 2D, 3D and 4D Wilson Loop kernel test and benchmark\n");
   printf(HLINE);
 
   Kokkos::initialize(argc, argv);

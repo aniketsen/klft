@@ -20,28 +20,32 @@
 // this file tests and benchmarks the gauge plaquette kernel for different
 // 2D, 3D and 4D gauge fields for U(1), SU(2) and SU(3) gauge groups
 
-#include "GaugePlaquette.hpp"
 #include <getopt.h>
+#include <KTune/KTune.hpp>
+#include "GaugePlaquette.hpp"
 
-#define HLINE "====================================================================\n"
+#define HLINE \
+  "====================================================================\n"
 
 using namespace klft;
 
 int run_benchmark(const size_t stream_size_array) {
   // get verbosity from environment
-  const int verbosity = std::getenv("KLFT_VERBOSITY") ?
-                        std::atoi(std::getenv("KLFT_VERBOSITY")) : 0;
+  const int verbosity = std::getenv("KLFT_VERBOSITY")
+                            ? std::atoi(std::getenv("KLFT_VERBOSITY"))
+                            : 0;
   setVerbosity(verbosity);
   // get tuning from environment
-  const int tuning = std::getenv("KLFT_TUNING") ?
-                     std::atoi(std::getenv("KLFT_TUNING")) : 0;
+  const int tuning =
+      std::getenv("KLFT_TUNING") ? std::atoi(std::getenv("KLFT_TUNING")) : 0;
   setTuning(tuning);
   // 4D volume of the gauge fields
-  const real_t volume4D = (real_t)stream_size_array * (real_t)stream_size_array *
-                        (real_t)stream_size_array * (real_t)stream_size_array;
+  const real_t volume4D = (real_t)stream_size_array *
+                          (real_t)stream_size_array *
+                          (real_t)stream_size_array * (real_t)stream_size_array;
   // 3D volume of the gauge fields
-  const real_t volume3D = (real_t)stream_size_array * (real_t)stream_size_array *
-                        (real_t)stream_size_array;
+  const real_t volume3D = (real_t)stream_size_array *
+                          (real_t)stream_size_array * (real_t)stream_size_array;
   // 2D volume of the gauge fields
   const real_t volume2D = (real_t)stream_size_array * (real_t)stream_size_array;
 
@@ -57,7 +61,7 @@ int run_benchmark(const size_t stream_size_array) {
   printf("Starting benchmark...\n");
   printf("Benchmark kernels will be performed for %d iterations.\n",
          STREAM_NTIMES);
-  printf("Reports fastest timing per kernel\n");  
+  printf("Reports fastest timing per kernel\n");
   printf("Lattice extent: %ld\n", stream_size_array);
   printf(HLINE);
 
@@ -68,21 +72,21 @@ int run_benchmark(const size_t stream_size_array) {
          1.0e-6 * U1_gauge_4D * (real_t)sizeof(complex_t));
   printf(HLINE);
   printf("Initializing Gauge...\n");
-  
+
   {
-  deviceGaugeField<4, 1> dev_g_U1_4D(stream_size_array, stream_size_array,
+    deviceGaugeField<4, 1> dev_g_U1_4D(stream_size_array, stream_size_array,
                                        stream_size_array, stream_size_array,
                                        identitySUN<1>());
 
-  printf("Running benchmark...\n");
+    printf("Running benchmark...\n");
 
-  // run the benchmark
-  for (index_t k = 0; k < STREAM_NTIMES; ++k) {
-    timer.reset();
-    plaq = GaugePlaquette<4, 1>(dev_g_U1_4D);
-    Kokkos::fence();
-    plaquetteTime = std::min(plaquetteTime, timer.seconds());
-  }
+    // run the benchmark
+    for (index_t k = 0; k < STREAM_NTIMES; ++k) {
+      timer.reset();
+      plaq = GaugePlaquette<4, 1>(dev_g_U1_4D);
+      Kokkos::fence();
+      plaquetteTime = std::min(plaquetteTime, timer.seconds());
+    }
   }
   printf(HLINE);
   printf("Calculated Plaquette value: %11.4e      Expected value: %11.4e\n",
@@ -90,7 +94,7 @@ int run_benchmark(const size_t stream_size_array) {
   printf("Plaquette Kernel Time:     %11.4e s\n", plaquetteTime);
   printf("Plaquette BW:              %11.4f GB/s\n",
          1.0e-9 * (real_t)sizeof(complex_t) * (volume4D + U1_gauge_4D) /
-         plaquetteTime);
+             plaquetteTime);
   printf(HLINE);
 
   // reset plaquette time
@@ -103,21 +107,21 @@ int run_benchmark(const size_t stream_size_array) {
          1.0e-6 * SU2_gauge_4D * (real_t)sizeof(complex_t));
   printf(HLINE);
   printf("Initializing Gauge...\n");
-  
+
   {
-  deviceGaugeField<4, 2> dev_g_SU2_4D(stream_size_array, stream_size_array,
+    deviceGaugeField<4, 2> dev_g_SU2_4D(stream_size_array, stream_size_array,
                                         stream_size_array, stream_size_array,
                                         identitySUN<2>());
 
-  printf("Running benchmark...\n");
+    printf("Running benchmark...\n");
 
-  // run the benchmark
-  for (index_t k = 0; k < STREAM_NTIMES; ++k) {
-    timer.reset();
-    plaq = GaugePlaquette<4, 2>(dev_g_SU2_4D);
-    Kokkos::fence();
-    plaquetteTime = std::min(plaquetteTime, timer.seconds());
-  }
+    // run the benchmark
+    for (index_t k = 0; k < STREAM_NTIMES; ++k) {
+      timer.reset();
+      plaq = GaugePlaquette<4, 2>(dev_g_SU2_4D);
+      Kokkos::fence();
+      plaquetteTime = std::min(plaquetteTime, timer.seconds());
+    }
   }
   printf(HLINE);
   printf("Calculated Plaquette value: %11.4e      Expected value: %11.4e\n",
@@ -125,7 +129,7 @@ int run_benchmark(const size_t stream_size_array) {
   printf("Plaquette Kernel Time:     %11.4e s\n", plaquetteTime);
   printf("Plaquette BW:              %11.4f GB/s\n",
          1.0e-9 * (real_t)sizeof(complex_t) * (volume4D + SU2_gauge_4D) /
-         plaquetteTime);
+             plaquetteTime);
   printf(HLINE);
 
   // reset plaquette time
@@ -138,21 +142,21 @@ int run_benchmark(const size_t stream_size_array) {
          1.0e-6 * SU3_gauge_4D * (real_t)sizeof(complex_t));
   printf(HLINE);
   printf("Initializing Gauge...\n");
-  
+
   {
-  deviceGaugeField<4, 3> dev_g_SU3_4D(stream_size_array, stream_size_array,
+    deviceGaugeField<4, 3> dev_g_SU3_4D(stream_size_array, stream_size_array,
                                         stream_size_array, stream_size_array,
                                         identitySUN<3>());
-  
-  printf("Running benchmark...\n");
 
-  // run the benchmark
-  for (index_t k = 0; k < STREAM_NTIMES; ++k) {
-    timer.reset();
-    plaq = GaugePlaquette<4, 3>(dev_g_SU3_4D);
-    Kokkos::fence();
-    plaquetteTime = std::min(plaquetteTime, timer.seconds());
-  }
+    printf("Running benchmark...\n");
+
+    // run the benchmark
+    for (index_t k = 0; k < STREAM_NTIMES; ++k) {
+      timer.reset();
+      plaq = GaugePlaquette<4, 3>(dev_g_SU3_4D);
+      Kokkos::fence();
+      plaquetteTime = std::min(plaquetteTime, timer.seconds());
+    }
   }
   printf(HLINE);
   printf("Calculated Plaquette value: %11.4e      Expected value: %11.4e\n",
@@ -160,7 +164,7 @@ int run_benchmark(const size_t stream_size_array) {
   printf("Plaquette Kernel Time:     %11.4e s\n", plaquetteTime);
   printf("Plaquette BW:              %11.4f GB/s\n",
          1.0e-9 * (real_t)sizeof(complex_t) * (volume4D + SU3_gauge_4D) /
-         plaquetteTime);
+             plaquetteTime);
   printf(HLINE);
 
   // reset plaquette time
@@ -173,20 +177,20 @@ int run_benchmark(const size_t stream_size_array) {
          1.0e-6 * U1_gauge_3D * (real_t)sizeof(complex_t));
   printf(HLINE);
   printf("Initializing Gauge...\n");
-  
+
   {
-  deviceGaugeField3D<3, 1> dev_g_U1_3D(stream_size_array, stream_size_array,
-                                       stream_size_array, identitySUN<1>());
+    deviceGaugeField3D<3, 1> dev_g_U1_3D(stream_size_array, stream_size_array,
+                                         stream_size_array, identitySUN<1>());
 
-  printf("Running benchmark...\n");
+    printf("Running benchmark...\n");
 
-  // run the benchmark
-  for (index_t k = 0; k < STREAM_NTIMES; ++k) {
-    timer.reset();
-    plaq = GaugePlaquette<3, 1>(dev_g_U1_3D);
-    Kokkos::fence();
-    plaquetteTime = std::min(plaquetteTime, timer.seconds());
-  }
+    // run the benchmark
+    for (index_t k = 0; k < STREAM_NTIMES; ++k) {
+      timer.reset();
+      plaq = GaugePlaquette<3, 1>(dev_g_U1_3D);
+      Kokkos::fence();
+      plaquetteTime = std::min(plaquetteTime, timer.seconds());
+    }
   }
   printf(HLINE);
   printf("Calculated Plaquette value: %11.4e      Expected value: %11.4e\n",
@@ -194,7 +198,7 @@ int run_benchmark(const size_t stream_size_array) {
   printf("Plaquette Kernel Time:     %11.4e s\n", plaquetteTime);
   printf("Plaquette BW:              %11.4f GB/s\n",
          1.0e-9 * (real_t)sizeof(complex_t) * (volume3D + U1_gauge_3D) /
-         plaquetteTime);
+             plaquetteTime);
   printf(HLINE);
 
   // reset plaquette time
@@ -207,20 +211,20 @@ int run_benchmark(const size_t stream_size_array) {
          1.0e-6 * SU2_gauge_3D * (real_t)sizeof(complex_t));
   printf(HLINE);
   printf("Initializing Gauge...\n");
-  
-  {
-  deviceGaugeField3D<3, 2> dev_g_SU2_3D(stream_size_array, stream_size_array,
-                                        stream_size_array, identitySUN<2>());
-  
-  printf("Running benchmark...\n");
 
-  // run the benchmark
-  for (index_t k = 0; k < STREAM_NTIMES; ++k) {
-    timer.reset();
-    plaq = GaugePlaquette<3, 2>(dev_g_SU2_3D);
-    Kokkos::fence();
-    plaquetteTime = std::min(plaquetteTime, timer.seconds());
-  }
+  {
+    deviceGaugeField3D<3, 2> dev_g_SU2_3D(stream_size_array, stream_size_array,
+                                          stream_size_array, identitySUN<2>());
+
+    printf("Running benchmark...\n");
+
+    // run the benchmark
+    for (index_t k = 0; k < STREAM_NTIMES; ++k) {
+      timer.reset();
+      plaq = GaugePlaquette<3, 2>(dev_g_SU2_3D);
+      Kokkos::fence();
+      plaquetteTime = std::min(plaquetteTime, timer.seconds());
+    }
   }
   printf(HLINE);
   printf("Calculated Plaquette value: %11.4e      Expected value: %11.4e\n",
@@ -228,7 +232,7 @@ int run_benchmark(const size_t stream_size_array) {
   printf("Plaquette Kernel Time:     %11.4e s\n", plaquetteTime);
   printf("Plaquette BW:              %11.4f GB/s\n",
          1.0e-9 * (real_t)sizeof(complex_t) * (volume3D + SU2_gauge_3D) /
-         plaquetteTime);
+             plaquetteTime);
   printf(HLINE);
 
   // reset plaquette time
@@ -241,20 +245,20 @@ int run_benchmark(const size_t stream_size_array) {
          1.0e-6 * SU3_gauge_3D * (real_t)sizeof(complex_t));
   printf(HLINE);
   printf("Initializing Gauge...\n");
-  
-  {
-  deviceGaugeField3D<3, 3> dev_g_SU3_3D(stream_size_array, stream_size_array,
-                                        stream_size_array, identitySUN<3>());
-  
-  printf("Running benchmark...\n");
 
-  // run the benchmark
-  for (index_t k = 0; k < STREAM_NTIMES; ++k) {
-    timer.reset();
-    plaq = GaugePlaquette<3, 3>(dev_g_SU3_3D);
-    Kokkos::fence();
-    plaquetteTime = std::min(plaquetteTime, timer.seconds());
-  }
+  {
+    deviceGaugeField3D<3, 3> dev_g_SU3_3D(stream_size_array, stream_size_array,
+                                          stream_size_array, identitySUN<3>());
+
+    printf("Running benchmark...\n");
+
+    // run the benchmark
+    for (index_t k = 0; k < STREAM_NTIMES; ++k) {
+      timer.reset();
+      plaq = GaugePlaquette<3, 3>(dev_g_SU3_3D);
+      Kokkos::fence();
+      plaquetteTime = std::min(plaquetteTime, timer.seconds());
+    }
   }
   printf(HLINE);
   printf("Calculated Plaquette value: %11.4e      Expected value: %11.4e\n",
@@ -262,7 +266,7 @@ int run_benchmark(const size_t stream_size_array) {
   printf("Plaquette Kernel Time:     %11.4e s\n", plaquetteTime);
   printf("Plaquette BW:              %11.4f GB/s\n",
          1.0e-9 * (real_t)sizeof(complex_t) * (volume3D + SU3_gauge_3D) /
-         plaquetteTime);
+             plaquetteTime);
   printf(HLINE);
 
   // reset plaquette time
@@ -275,20 +279,20 @@ int run_benchmark(const size_t stream_size_array) {
          1.0e-6 * U1_gauge_2D * (real_t)sizeof(complex_t));
   printf(HLINE);
   printf("Initializing Gauge...\n");
-  
+
   {
-  deviceGaugeField2D<2, 1> dev_g_U1_2D(stream_size_array, stream_size_array,
-                                       identitySUN<1>());
+    deviceGaugeField2D<2, 1> dev_g_U1_2D(stream_size_array, stream_size_array,
+                                         identitySUN<1>());
 
-  printf("Running benchmark...\n");
+    printf("Running benchmark...\n");
 
-  // run the benchmark
-  for (index_t k = 0; k < STREAM_NTIMES; ++k) {
-    timer.reset();
-    plaq = GaugePlaquette<2, 1>(dev_g_U1_2D);
-    Kokkos::fence();
-    plaquetteTime = std::min(plaquetteTime, timer.seconds());
-  }
+    // run the benchmark
+    for (index_t k = 0; k < STREAM_NTIMES; ++k) {
+      timer.reset();
+      plaq = GaugePlaquette<2, 1>(dev_g_U1_2D);
+      Kokkos::fence();
+      plaquetteTime = std::min(plaquetteTime, timer.seconds());
+    }
   }
   printf(HLINE);
   printf("Calculated Plaquette value: %11.4e      Expected value: %11.4e\n",
@@ -296,7 +300,7 @@ int run_benchmark(const size_t stream_size_array) {
   printf("Plaquette Kernel Time:     %11.4e s\n", plaquetteTime);
   printf("Plaquette BW:              %11.4f GB/s\n",
          1.0e-9 * (real_t)sizeof(complex_t) * (volume2D + U1_gauge_2D) /
-         plaquetteTime);
+             plaquetteTime);
   printf(HLINE);
 
   // reset plaquette time
@@ -309,20 +313,20 @@ int run_benchmark(const size_t stream_size_array) {
          1.0e-6 * SU2_gauge_2D * (real_t)sizeof(complex_t));
   printf(HLINE);
   printf("Initializing Gauge...\n");
-  
+
   {
-  deviceGaugeField2D<2, 2> dev_g_SU2_2D(stream_size_array, stream_size_array,
-                                        identitySUN<2>());
+    deviceGaugeField2D<2, 2> dev_g_SU2_2D(stream_size_array, stream_size_array,
+                                          identitySUN<2>());
 
-  printf("Running benchmark...\n");
+    printf("Running benchmark...\n");
 
-  // run the benchmark
-  for (index_t k = 0; k < STREAM_NTIMES; ++k) {
-    timer.reset();
-    plaq = GaugePlaquette<2, 2>(dev_g_SU2_2D);
-    Kokkos::fence();
-    plaquetteTime = std::min(plaquetteTime, timer.seconds());
-  }
+    // run the benchmark
+    for (index_t k = 0; k < STREAM_NTIMES; ++k) {
+      timer.reset();
+      plaq = GaugePlaquette<2, 2>(dev_g_SU2_2D);
+      Kokkos::fence();
+      plaquetteTime = std::min(plaquetteTime, timer.seconds());
+    }
   }
   printf(HLINE);
   printf("Calculated Plaquette value: %11.4e      Expected value: %11.4e\n",
@@ -330,7 +334,7 @@ int run_benchmark(const size_t stream_size_array) {
   printf("Plaquette Kernel Time:     %11.4e s\n", plaquetteTime);
   printf("Plaquette BW:              %11.4f GB/s\n",
          1.0e-9 * (real_t)sizeof(complex_t) * (volume2D + SU2_gauge_2D) /
-         plaquetteTime);
+             plaquetteTime);
   printf(HLINE);
 
   // reset plaquette time
@@ -342,20 +346,20 @@ int run_benchmark(const size_t stream_size_array) {
          1.0e-6 * SU3_gauge_2D * (real_t)sizeof(complex_t));
   printf(HLINE);
   printf("Initializing Gauge...\n");
-  
+
   {
-  deviceGaugeField2D<2, 3> dev_g_SU3_2D(stream_size_array, stream_size_array,
-                                        identitySUN<3>());
+    deviceGaugeField2D<2, 3> dev_g_SU3_2D(stream_size_array, stream_size_array,
+                                          identitySUN<3>());
 
-  printf("Running benchmark...\n");
+    printf("Running benchmark...\n");
 
-  // run the benchmark
-  for (index_t k = 0; k < STREAM_NTIMES; ++k) {
-    timer.reset();
-    plaq = GaugePlaquette<2, 3>(dev_g_SU3_2D);
-    Kokkos::fence();
-    plaquetteTime = std::min(plaquetteTime, timer.seconds());
-  }
+    // run the benchmark
+    for (index_t k = 0; k < STREAM_NTIMES; ++k) {
+      timer.reset();
+      plaq = GaugePlaquette<2, 3>(dev_g_SU3_2D);
+      Kokkos::fence();
+      plaquetteTime = std::min(plaquetteTime, timer.seconds());
+    }
   }
   printf(HLINE);
   printf("Calculated Plaquette value: %11.4e      Expected value: %11.4e\n",
@@ -363,13 +367,13 @@ int run_benchmark(const size_t stream_size_array) {
   printf("Plaquette Kernel Time:     %11.4e s\n", plaquetteTime);
   printf("Plaquette BW:              %11.4f GB/s\n",
          1.0e-9 * (real_t)sizeof(complex_t) * (volume2D + SU3_gauge_2D) /
-         plaquetteTime);
+             plaquetteTime);
   printf(HLINE);
 
   return 0;
 }
 
-int parse_args(int argc, char **argv, size_t &stream_array_size) {
+int parse_args(int argc, char** argv, size_t& stream_array_size) {
   // Defaults
   stream_array_size = 32;
 
@@ -392,12 +396,15 @@ int parse_args(int argc, char **argv, size_t &stream_array_size) {
   while ((c = getopt_long(argc, argv, "n:h", long_options, &option_index)) !=
          -1)
     switch (c) {
-      case 'n': stream_array_size = atoi(optarg); break;
+      case 'n':
+        stream_array_size = atoi(optarg);
+        break;
       case 'h':
         printf("%s", help_string.c_str());
         return -2;
         break;
-      case 0: break;
+      case 0:
+        break;
       default:
         printf("%s", help_string.c_str());
         return -1;
@@ -406,12 +413,14 @@ int parse_args(int argc, char **argv, size_t &stream_array_size) {
   return 0;
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   printf(HLINE);
-  printf("SU(N) GaugeField 2D, 3D and 4D plaquette kernel test and benchmark\n");
+  printf(
+      "SU(N) GaugeField 2D, 3D and 4D plaquette kernel test and benchmark\n");
   printf(HLINE);
 
   Kokkos::initialize(argc, argv);
+  KTune::initialize();
   int rc;
   size_t stream_array_size;
   rc = parse_args(argc, argv, stream_array_size);

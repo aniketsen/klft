@@ -1,3 +1,15 @@
 .vscode
 build
 *.code-workspace
+arc
+CMakePresets.json
+.cache
+.clangd
+cmake-build-*
+compile_commands.json
+
+.nvim.lua
+.gitignore
+hmc_log
+ptbc_log
+.tmp

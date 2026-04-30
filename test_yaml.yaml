@@ -1,0 +1,107 @@
+MetropolisParams:
+  Ndims: 4
+  L0: 32
+  L1: 32
+  L2: 32
+  L3: 32
+  nHits: 10
+  nSweep: 1000
+  seed: 1234
+  Nd: 4
+  Nc: 2
+  beta: 1.0
+  delta: 0.1
+
+HMCParams:
+  Ndims: 4
+  L0: 8
+  L1: 8
+  L2: 8
+  L3: 8
+  seed: 1234
+  Nd: 4
+  Nc: 2
+  coldStart: false
+  rngDelta: 1
+# Level 0 is the innermost level of the Integrator, i.e that is executed most frequently.
+Integrator:
+
+  tau: 1
+  nSteps: 50
+  Monomials:
+    - Type: "Leapfrog"
+      level: 0
+      steps: 100
+    # - Type: "Leapfrog"
+    #   level: 1
+    #   steps: 20
+Gauge Monomial:
+  level: 0
+  beta: 3.12
+
+# Fermion Monomial:
+#   level: 1
+#   fermion: "HWilson"
+#   solver: "CG"
+#   RepDim: 4
+#   kappa: 0.15
+#   tol: 1e-10
+
+GaugeObservableParams:
+  measurement_interval: 1
+  measure_plaquette: true
+  measure_wilson_loop_temporal: false
+  measure_wilson_loop_mu_nu: false
+  measure_topological_charge: true
+  measure_action_density: true
+  flush: 5
+  do_wilson_flow: true
+  WilsonFlowParams:
+    tau: 1.0
+    eps: 0.01
+
+  W_temp_L_T_pairs:
+    - [2, 3]
+    - [3, 4]
+
+  W_mu_nu_pairs:
+    - [0, 1]
+    - [1, 2]
+
+  W_Lmu_Lnu_pairs:
+    - [2, 2]
+    - [3, 3]
+
+  plaquette_filename: "plaquette_output.txt"
+  topological_charge_filename: "topological_charge.txt"
+  W_temp_filename: "wilson_temp_output.txt"
+  W_mu_nu_filename: "wilson_mu_nu_output.txt"
+  action_density_filename: "action_density.txt"
+
+  write_to_file: true
+
+SimulationLoggingParams:
+  log_interval: 1
+  log_delta_H: true
+  log_acceptance: true
+  log_time: true
+  flush: 5
+  
+  log_filename: "simulation_log.txt"
+  write_to_file: true
+
+PTBCParams:
+  defect_length: 2
+  defect_values: [0.0, 0.143, 0.286, 0.429, 0.571, 0.714, 0.857, 1.0]
+
+
+PTBCSimulationLoggingParams:
+  log_interval: 1
+  log_delta_H_swap: true
+  log_swap_start: true
+  log_swap_accepts: true
+  log_defects: true
+  flush: 5
+  
+  log_filename: "ptbcsimulation_log.txt"
+  write_to_file: true
